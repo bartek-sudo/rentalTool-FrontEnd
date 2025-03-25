@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { jwtDecode } from 'jwt-decode';
+import { CookieService } from 'ngx-cookie-service';
 
 interface TokenPayload {
   sub: string;
@@ -14,18 +15,42 @@ interface TokenPayload {
 export class TokenService {
   private readonly TOKEN_KEY = 'auth_token';
 
-  constructor() { }
+  constructor(private cookieService: CookieService) { }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    // return localStorage.getItem(this.TOKEN_KEY);
+    return this.cookieService.get(this.TOKEN_KEY) || null;
   }
 
   setToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
+    // localStorage.setItem(this.TOKEN_KEY, token);
+    const expirationDate = this.getExpirationDateFromToken(token);
+    this.cookieService.set(
+      this.TOKEN_KEY,
+      token,
+      expirationDate,
+      '/',
+      undefined,
+      false,  // zmień na true dla połączeń HTTPS
+      'Strict'
+    );
+  }
+
+  private getExpirationDateFromToken(token: string): Date {
+    try {
+      const decoded = jwtDecode<TokenPayload>(token);
+      return new Date(decoded.exp * 1000);
+    } catch (e) {
+      // W przypadku błędu ustawmy domyślny czas ważności na 1 dzień
+      const date = new Date();
+      date.setDate(date.getDate() + 1);
+      return date;
+    }
   }
 
   destroyToken(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
+    // localStorage.removeItem(this.TOKEN_KEY);
+    this.cookieService.delete(this.TOKEN_KEY, '/');
   }
 
   getDecodedToken(): TokenPayload | null {

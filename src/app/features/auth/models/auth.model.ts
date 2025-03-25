@@ -3,4 +3,11 @@ export interface UserLoginRequest {
   password: string;
 }
 
+export interface UserRegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
 

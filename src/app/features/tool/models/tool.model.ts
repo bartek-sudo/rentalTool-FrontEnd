@@ -11,7 +11,7 @@ export interface Tool {
   address: string;
   latitude?: number;
   longitude?: number;
-  imageUrl?: string;
+  mainImageUrl: string;
   createdAt: string;
   updatedAt: string;
   isAvailable?: boolean;

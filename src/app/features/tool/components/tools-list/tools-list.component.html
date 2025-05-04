@@ -1,0 +1,119 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Breadcrumb -->
+  <nav class="text-sm mb-8">
+    <ol class="list-none p-0 inline-flex">
+      <li class="flex items-center">
+        <a routerLink="/" class="text-blue-600 hover:text-blue-800">Home</a>
+        <svg class="w-3 h-3 fill-current mx-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
+          <path d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z"/>
+        </svg>
+      </li>
+      <li>
+        <span class="text-gray-500">Narzędzia</span>
+      </li>
+    </ol>
+  </nav>
+
+  <!-- Nagłówek -->
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+      {{searchTerm ? 'Wyniki wyszukiwania' : 'Wszystkie narzędzia'}}
+    </h1>
+    <div class="flex items-center space-x-4">
+      <select [(ngModel)]="selectedSort" (change)="updateSort()" class="block p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+        <option value="newest">Najnowsze</option>
+        <option value="oldest">Najstarsze</option>
+        <option value="name_asc">Nazwa (A-Z)</option>
+        <option value="name_desc">Nazwa (Z-A)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Informacja o wyszukiwaniu -->
+  <div *ngIf="searchTerm" class="mb-6">
+    <p class="text-gray-600 dark:text-gray-400">
+      Szukasz: <strong>"{{searchTerm}}"</strong>
+      <span *ngIf="totalItems > 0"> - znaleziono {{totalItems}} wyników</span>
+    </p>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+  </div>
+
+  <!-- Lista narzędzi -->
+  <div *ngIf="!isLoading && tools.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let tool of tools" class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+      <img *ngIf="tool.mainImageUrl" [src]="tool.mainImageUrl" [alt]="tool.name" class="w-full h-48 object-cover">
+      <div class="p-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{tool.name}}</h2>
+        <p class="text-gray-600 dark:text-gray-300 mb-4">{{tool.description}}</p>
+        <div class="flex justify-between items-center">
+          <span class="text-lg font-bold text-blue-600">{{tool.pricePerDay | currency:'PLN'}}/dzień</span>
+          <a [routerLink]="['/tool', tool.id]" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+            Zobacz szczegóły
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Brak wyników -->
+  <div *ngIf="!isLoading && tools.length === 0" class="text-center py-12">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak wyników</h3>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+      {{searchTerm ? 'Spróbuj zmienić wyszukiwane hasło' : 'Nie znaleziono żadnych narzędzi'}}
+    </p>
+  </div>
+
+  <!-- Paginacja -->
+  <div *ngIf="totalPages > 1" class="mt-8 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+    <div class="flex flex-1 justify-between sm:hidden">
+      <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 0"
+        class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+        Poprzednia
+      </button>
+      <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages - 1"
+        class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+        Następna
+      </button>
+    </div>
+    <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+      <div>
+        <p class="text-sm text-gray-700">
+          Pokazano <span class="font-medium">{{(currentPage * pageSize) + 1}}</span> do <span class="font-medium">{{Math.min((currentPage + 1) * pageSize, totalItems)}}</span> z <span class="font-medium">{{totalItems}}</span> wyników
+        </p>
+      </div>
+      <div>
+        <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+          <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 0"
+            class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
+            <span class="sr-only">Poprzednia</span>
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <button *ngFor="let page of getPageNumbers()"
+            (click)="changePage(page)"
+            [ngClass]="{'bg-blue-600 text-white': page === currentPage, 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50': page !== currentPage}"
+            class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0">
+            {{page + 1}}
+          </button>
+
+          <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages - 1"
+            class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
+            <span class="sr-only">Następna</span>
+            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

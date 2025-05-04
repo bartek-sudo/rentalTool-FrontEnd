@@ -24,7 +24,11 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: 'tool-details/:id',
+    path: 'tool/:id',
     loadComponent: () => import('./features/tool/components/tool-details/tool-details.component').then(m => m.ToolDetailsComponent)
-  }
+  },
+  {
+    path: 'tools',
+    loadComponent: () => import('./features/tool/components/tools-list/tools-list.component').then(m => m.ToolsListComponent)
+  },
 ];

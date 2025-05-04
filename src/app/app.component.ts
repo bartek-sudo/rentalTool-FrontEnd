@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterModule, RouterOutlet } from '@angular/router';
 import { initFlowbite } from 'flowbite';
-import { NavbarComponent } from './features/auth/components/navbar/navbar.component';
+import { NavbarComponent } from './features/layout/navbar/navbar.component';
 
 @Component({
   selector: 'app-root',

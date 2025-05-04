@@ -1,0 +1,18 @@
+import { User } from "../../../core/models/user.model";
+import { Category } from "./category.model";
+
+export interface Tool {
+  id: number;
+  name: string;
+  description: string;
+  pricePerDay: number;
+  category: Category;
+  owner: User;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  isAvailable?: boolean;
+}

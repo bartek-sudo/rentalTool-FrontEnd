@@ -1,0 +1,287 @@
+import { Component, OnInit, Input } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DailyAvailability } from '../../models/daily-availability.model';
+import { ToolService } from '../../services/tool.service';
+
+@Component({
+  selector: 'app-tool-availability',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './tool-availability.component.html',
+  styleUrls: ['./tool-availability.component.css']
+})
+export class ToolAvailabilityComponent implements OnInit {
+  @Input() toolId: number = 1; // Dodaj @Input dla elastyczności
+
+  currentMonth: Date = new Date();
+  selectedStartDate: Date | null = null;
+  selectedEndDate: Date | null = null;
+  availabilityData: DailyAvailability[] = [];
+  isLoading: boolean = false;
+  errorMessage: string = '';
+
+  // Dni tygodnia
+  weekdays: string[] = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
+
+  // Kalendarz - tablica dni
+  calendarDays: any[] = [];
+
+  constructor(private toolService: ToolService) { }
+
+  ngOnInit(): void {
+    this.loadAvailabilityData();
+  }
+
+  // Poprawiona metoda z właściwym mapowaniem danych
+  loadAvailabilityData(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    const today = new Date();
+
+    // Poprawiona kalkulacja: pierwszy dzień obecnego miesiąca
+    const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    // Poprawna kalkulacja: ostatni dzień za 3 miesiące
+    // new Date(year, month, 0) daje ostatni dzień poprzedniego miesiąca
+    const endDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
+
+    // Konwersja dat na format wymagany przez API (YYYY-MM-DD)
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    console.log('Start date:', startDateStr); // Powinno być 2025-05-01
+    console.log('End date:', endDateStr);     // Powinno być 2025-07-31
+
+    this.toolService.getToolAvailability(this.toolId, startDateStr, endDateStr)
+      .subscribe({
+        next: (data) => {
+          // Mapowanie danych jeśli API używa 'available' zamiast 'isAvailable'
+          this.availabilityData = data.map((item: any) => ({
+            date: item.date,
+            available: item.available !== undefined ? item.available : item.isAvailable
+          }));
+
+          this.generateCalendar();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Błąd podczas pobierania dostępności:', error);
+          this.errorMessage = 'Nie udało się załadować dostępności narzędzia.';
+          this.isLoading = false;
+        }
+      });
+  }
+
+  // Dodaj przykładowe dane jako fallback
+  generateExampleData(): void {
+    const today = new Date();
+    const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endDate = new Date(today.getFullYear(), today.getMonth() + 3, 0);
+
+    this.availabilityData = [];
+    let currentDate = new Date(startDate);
+
+    while (currentDate <= endDate) {
+      const available = Math.random() > 0.2;
+      this.availabilityData.push({
+        date: new Date(currentDate).toISOString().split('T')[0],
+        available: available
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    this.generateCalendar();
+  }
+
+  // Generowanie kalendarza
+  generateCalendar(): void {
+    const year = this.currentMonth.getFullYear();
+    const month = this.currentMonth.getMonth();
+
+    const daysInMonth = this.getDaysInMonth(this.currentMonth);
+    const firstDayOfMonth = this.getFirstDayOfMonth(this.currentMonth);
+
+    this.calendarDays = [];
+
+    // Dni z poprzedniego miesiąca (puste komórki)
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      this.calendarDays.push({
+        day: null,
+        isCurrentMonth: false
+      });
+    }
+
+    // Dni aktualnego miesiąca
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      this.calendarDays.push({
+        day: day,
+        date: date,
+        isCurrentMonth: true,
+        isToday: this.isToday(date),
+        isAvailable: this.isDayAvailable(year, month, day),
+        isSelected: this.isDaySelected(year, month, day)
+      });
+    }
+  }
+
+  // Pozostałe metody
+  getDaysInMonth(date: Date): number {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  }
+
+  getFirstDayOfMonth(date: Date): number {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  }
+
+  isToday(date: Date): boolean {
+    const today = new Date();
+    return date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  }
+
+  // POPRAWKA: Dodaj sprawdzenie czy dzień jest poza zakresem danych
+  isDayAvailable(year: number, month: number, day: number): boolean {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dayData = this.availabilityData.find(d => d.date === dateStr);
+
+    // Jeśli nie znaleziono dnia w danych, traktuj jako niedostępny
+    if (!dayData) return false;
+
+    return dayData.available;
+  }
+
+  isDaySelected(year: number, month: number, day: number): boolean {
+    if (!this.selectedStartDate && !this.selectedEndDate) return false;
+
+    const date = new Date(year, month, day);
+
+    if (this.selectedStartDate && !this.selectedEndDate) {
+      return date.toDateString() === this.selectedStartDate.toDateString();
+    }
+
+    if (this.selectedStartDate && this.selectedEndDate) {
+      return date >= this.selectedStartDate && date <= this.selectedEndDate;
+    }
+
+    return false;
+  }
+
+  handleDayClick(day: any): void {
+    if (!day.day || !day.isCurrentMonth || !day.isAvailable) return;
+
+    const clickedDate = day.date;
+
+    if (!this.selectedStartDate || (this.selectedStartDate && this.selectedEndDate)) {
+      this.selectedStartDate = clickedDate;
+      this.selectedEndDate = null;
+    } else {
+      if (clickedDate < this.selectedStartDate) {
+        this.selectedStartDate = clickedDate;
+        this.selectedEndDate = null;
+      } else {
+        let allDaysAvailable = true;
+        let currentDay = new Date(this.selectedStartDate);
+
+        while (currentDay <= clickedDate) {
+          if (!this.isDayAvailable(
+            currentDay.getFullYear(),
+            currentDay.getMonth(),
+            currentDay.getDate()
+          )) {
+            allDaysAvailable = false;
+            break;
+          }
+          currentDay.setDate(currentDay.getDate() + 1);
+        }
+
+        if (!allDaysAvailable) {
+          alert('Wybrany zakres zawiera niedostępne dni!');
+          return;
+        }
+
+        this.selectedEndDate = clickedDate;
+      }
+    }
+
+    this.generateCalendar();
+  }
+
+  // POPRAWKA: Dodaj ponowne ładowanie danych przy zmianie miesiąca
+  prevMonth(): void {
+    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1);
+    this.checkIfNeedToLoadData();
+    this.generateCalendar();
+  }
+
+  nextMonth(): void {
+    this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 1);
+    this.checkIfNeedToLoadData();
+    this.generateCalendar();
+  }
+
+  // DODANE: Sprawdź czy trzeba załadować nowe dane
+  checkIfNeedToLoadData(): void {
+    const currentMonthStr = this.currentMonth.toISOString().split('T')[0].substring(0, 7);
+    const hasDataForMonth = this.availabilityData.some(day =>
+      day.date.startsWith(currentMonthStr)
+    );
+
+    if (!hasDataForMonth && !this.isLoading) {
+      this.loadAvailabilityData();
+    }
+  }
+
+  formatDate(date: Date | null): string {
+    if (!date) return 'Nie wybrano';
+
+    return date.toLocaleDateString('pl-PL', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  }
+
+  formatMonthHeader(): string {
+    return this.currentMonth.toLocaleDateString('pl-PL', {
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  resetSelection(): void {
+    this.selectedStartDate = null;
+    this.selectedEndDate = null;
+    this.generateCalendar();
+  }
+
+  // POPRAWKA: Dodaj obsługę rezerwacji z API
+  confirmReservation(): void {
+    if (!this.selectedStartDate || !this.selectedEndDate) {
+      alert('Wybierz datę rozpoczęcia i zakończenia!');
+      return;
+    }
+
+    this.isLoading = true;
+    const reservationData = {
+      startDate: this.selectedStartDate.toISOString().split('T')[0],
+      endDate: this.selectedEndDate.toISOString().split('T')[0],
+      toolId: this.toolId
+    };
+
+    this.toolService.createReservation(reservationData)
+      .subscribe({
+        next: () => {
+          alert(`Rezerwacja potwierdzona od ${this.formatDate(this.selectedStartDate)} do ${this.formatDate(this.selectedEndDate)}`);
+          this.resetSelection();
+          this.loadAvailabilityData(); // Odśwież dane po udanej rezerwacji
+        },
+        error: (error) => {
+          console.error('Błąd podczas tworzenia rezerwacji:', error);
+          this.errorMessage = 'Nie udało się utworzyć rezerwacji. Spróbuj ponownie.';
+          this.isLoading = false;
+        }
+      });
+  }
+}

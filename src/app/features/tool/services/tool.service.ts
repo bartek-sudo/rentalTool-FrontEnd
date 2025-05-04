@@ -1,0 +1,40 @@
+import { inject, Injectable } from '@angular/core';
+import { environment } from '../../../../environments/enviroment';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
+import { Tool } from '../models/tool.model';
+import { DailyAvailability } from '../models/daily-availability.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ToolService {
+  private http = inject(HttpClient);
+
+  private apiUrl = `${environment.apiUrl}/api/v1/tools`;
+  private reservationApiUrl = `${environment.apiUrl}/api/v1/reservations`;
+
+  constructor() { }
+
+  getToolById(toolId: number): Observable<Tool> {
+    return this.http.get<{ data: { Tool: Tool } }>(`${this.apiUrl}/${toolId}`).pipe(
+      map(response => response.data.Tool) // Wyciągamy obiekt Tool z odpowiedzi
+    );
+  }
+
+  getToolImages(toolId: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${toolId}/images`);
+  }
+
+  getToolAvailability(toolId: number, startDate: string, endDate: string): Observable<DailyAvailability[]> {
+    return this.http.get<DailyAvailability[]>(
+      `${this.apiUrl}/${toolId}/availability?startDate=${startDate}&endDate=${endDate}`
+    );
+  }
+
+  createReservation(reservationData: any): Observable<any> {
+    return this.http.post(this.reservationApiUrl, reservationData);
+  }
+
+
+}

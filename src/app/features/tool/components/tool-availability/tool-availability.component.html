@@ -1,0 +1,98 @@
+
+
+<div class="calendar-container" [ngClass]="{'blurred': isLoading}">
+  <h1 class="calendar-title">Kalendarz Rezerwacji</h1>
+
+  <!-- Nagłówek miesiąca -->
+  <div class="month-header">
+    <button class="month-nav-button" (click)="prevMonth()">&lt;</button>
+    <h2 class="month-title">{{ formatMonthHeader() }}</h2>
+    <button class="month-nav-button" (click)="nextMonth()">&gt;</button>
+  </div>
+
+  <!-- Dni tygodnia -->
+  <div class="weekdays">
+    <div class="weekday" *ngFor="let day of weekdays">{{ day }}</div>
+  </div>
+
+   <!-- Komunikat błędu -->
+<div *ngIf="errorMessage" class="alert alert-error mb-4">
+  <div class="flex items-center">
+    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+    {{ errorMessage }}
+  </div>
+</div>
+
+<!-- Wskaźnik ładowania -->
+<div *ngIf="isLoading" class="loading-overlay">
+  <div class="spinner">
+    <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <span>Ładowanie...</span>
+  </div>
+</div>
+
+  <!-- Siatka kalendarza -->
+  <div class="calendar-grid">
+    <div
+      *ngFor="let day of calendarDays"
+      class="calendar-day"
+      [ngClass]="{
+        'empty-day': !day.day,
+        'available-day': day.day && day.isAvailable && !day.isSelected,
+        'unavailable-day': day.day && !day.isAvailable,
+        'selected-day': day.day && day.isSelected,
+        'today': day.isToday && !day.isSelected
+      }"
+      (click)="handleDayClick(day)"
+    >
+      {{ day.day }}
+    </div>
+  </div>
+
+  <!-- Szczegóły rezerwacji -->
+  <div class="reservation-details">
+    <div class="date-range">
+      <div class="date-item">
+        <span class="date-label">Data rozpoczęcia</span>
+        <span class="date-value">{{ formatDate(selectedStartDate) }}</span>
+      </div>
+      <div class="date-item">
+        <span class="date-label">Data zakończenia</span>
+        <span class="date-value">{{ formatDate(selectedEndDate) }}</span>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="cancel-button" (click)="resetSelection()">Anuluj</button>
+      <button
+        class="reserve-button"
+        [ngClass]="{ 'disabled': !selectedStartDate || !selectedEndDate }"
+        [disabled]="!selectedStartDate || !selectedEndDate"
+        (click)="confirmReservation()"
+      >
+        Zarezerwuj
+      </button>
+    </div>
+  </div>
+
+  <!-- Legenda -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-color available-color"></div>
+      <span>Dostępne</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color unavailable-color"></div>
+      <span>Niedostępne</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color selected-color"></div>
+      <span>Wybrane</span>
+    </div>
+  </div>
+</div>

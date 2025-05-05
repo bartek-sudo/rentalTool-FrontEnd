@@ -37,7 +37,7 @@ export class ToolService {
   }
 
   createReservation(reservationData: any): Observable<any> {
-    return this.http.post(this.reservationApiUrl, reservationData);
+    return this.http.post(`${this.reservationApiUrl}/create`, reservationData);
   }
 
   searchTools(

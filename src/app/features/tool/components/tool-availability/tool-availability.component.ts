@@ -11,7 +11,8 @@ import { ToolService } from '../../services/tool.service';
   styleUrls: ['./tool-availability.component.css']
 })
 export class ToolAvailabilityComponent implements OnInit {
-  @Input() toolId: number = 1; // Dodaj @Input dla elastyczności
+  @Input() toolId: number = 1;
+  @Input() pricePerDay: number = 0;
 
   currentMonth: Date = new Date();
   selectedStartDate: Date | null = null;
@@ -32,6 +33,13 @@ export class ToolAvailabilityComponent implements OnInit {
     this.loadAvailabilityData();
   }
 
+  private dateToString(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   // Poprawiona metoda z właściwym mapowaniem danych
   loadAvailabilityData(): void {
     this.isLoading = true;
@@ -40,18 +48,17 @@ export class ToolAvailabilityComponent implements OnInit {
     const today = new Date();
 
     // Poprawiona kalkulacja: pierwszy dzień obecnego miesiąca
-    const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
     // Poprawna kalkulacja: ostatni dzień za 3 miesiące
     // new Date(year, month, 0) daje ostatni dzień poprzedniego miesiąca
     const endDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
 
-    // Konwersja dat na format wymagany przez API (YYYY-MM-DD)
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
+    const startDateStr = this.dateToString(startDate);
+    const endDateStr = this.dateToString(endDate);
 
     console.log('Start date:', startDateStr); // Powinno być 2025-05-01
-    console.log('End date:', endDateStr);     // Powinno być 2025-07-31
+    console.log('End date:', endDateStr);
 
     this.toolService.getToolAvailability(this.toolId, startDateStr, endDateStr)
       .subscribe({
@@ -256,7 +263,6 @@ export class ToolAvailabilityComponent implements OnInit {
     this.generateCalendar();
   }
 
-  // POPRAWKA: Dodaj obsługę rezerwacji z API
   confirmReservation(): void {
     if (!this.selectedStartDate || !this.selectedEndDate) {
       alert('Wybierz datę rozpoczęcia i zakończenia!');
@@ -265,8 +271,8 @@ export class ToolAvailabilityComponent implements OnInit {
 
     this.isLoading = true;
     const reservationData = {
-      startDate: this.selectedStartDate.toISOString().split('T')[0],
-      endDate: this.selectedEndDate.toISOString().split('T')[0],
+      startDate: this.dateToString(this.selectedStartDate),
+      endDate: this.dateToString(this.selectedEndDate),
       toolId: this.toolId
     };
 
@@ -283,5 +289,26 @@ export class ToolAvailabilityComponent implements OnInit {
           this.isLoading = false;
         }
       });
+  }
+
+
+  // Metody do obliczania ceny
+  getNumberOfDays(): number {
+    if (!this.selectedStartDate || !this.selectedEndDate) return 0;
+
+    const timeDiff = this.selectedEndDate.getTime() - this.selectedStartDate.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    return daysDiff + 1; // Dodajemy 1, bo rezerwacja obejmuje pierwszy i ostatni dzień
+  }
+
+  getTotalPrice(): number {
+    return this.getNumberOfDays() * this.pricePerDay;
+  }
+
+  formatPrice(price: number): string {
+    return price.toLocaleString('pl-PL', {
+      style: 'currency',
+      currency: 'PLN'
+    });
   }
 }

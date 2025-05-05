@@ -1,142 +1,145 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="flex flex-col md:flex-row gap-8">
-    <!-- Sekcja główna z informacjami o narzędziu -->
-    <div class="md:w-2/3">
-      <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="bg-blue-600 text-white px-6 py-4">
-          <h1 class="text-2xl font-bold">{{ tool?.name }}</h1>
-        </div>
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row gap-8">
+      <!-- Sekcja główna z informacjami o narzędziu -->
+      <div class="md:w-2/3">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+          <div class="bg-blue-600 dark:bg-blue-700 text-white px-6 py-4">
+            <h1 class="text-2xl font-bold">{{ tool?.name }}</h1>
+          </div>
 
-        <div class="p-6">
-          <!-- Obrazek narzędzia -->
-          <div class="mb-6">
-            <!-- Galeria zdjęć -->
-            <div class="relative">
-              <!-- Główne zdjęcie -->
-              <div *ngIf="toolImages.length > 0" class="mb-2">
-                <img [src]="toolImages[currentImageIndex].url" class="w-full h-auto rounded-lg object-cover max-h-96"
-                  [alt]="tool?.name">
+          <div class="p-6">
+            <!-- Obrazek narzędzia -->
+            <div class="mb-6">
+              <!-- Galeria zdjęć -->
+              <div class="relative">
+                <!-- Główne zdjęcie -->
+                <div *ngIf="toolImages.length > 0" class="mb-2">
+                  <img [src]="toolImages[currentImageIndex].url" class="w-full h-auto rounded-lg object-cover max-h-96"
+                    [alt]="tool?.name">
 
-                <!-- Przyciski nawigacji -->
-                <button *ngIf="toolImages.length > 1" (click)="prevImage()"
-                  class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-2 hover:bg-opacity-100">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
+                  <!-- Przyciski nawigacji -->
+                  <button *ngIf="toolImages.length > 1" (click)="prevImage()"
+                    class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white dark:bg-gray-800 bg-opacity-70 dark:bg-opacity-70 rounded-full p-2 hover:bg-opacity-100 dark:hover:bg-opacity-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
 
-                <button *ngIf="toolImages.length > 1" (click)="nextImage()"
-                  class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-2 hover:bg-opacity-100">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
+                  <button *ngIf="toolImages.length > 1" (click)="nextImage()"
+                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white dark:bg-gray-800 bg-opacity-70 dark:bg-opacity-70 rounded-full p-2 hover:bg-opacity-100 dark:hover:bg-opacity-100">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
 
-              <!-- Miniatury zdjęć -->
-              <div *ngIf="toolImages.length > 1" class="flex space-x-2 overflow-x-auto pb-2">
-                <div *ngFor="let image of toolImages; let i = index" (click)="changeImage(i)"
-                  class="h-16 w-16 flex-shrink-0 cursor-pointer rounded-md overflow-hidden"
-                  [ngClass]="{'ring-2 ring-blue-500': i === currentImageIndex}">
-                  <img [src]="image.url" class="h-full w-full object-cover" [alt]="tool?.name + ' thumbnail'">
+                <!-- Miniatury zdjęć -->
+                <div *ngIf="toolImages.length > 1" class="flex space-x-2 overflow-x-auto pb-2">
+                  <div *ngFor="let image of toolImages; let i = index" (click)="changeImage(i)"
+                    class="h-16 w-16 flex-shrink-0 cursor-pointer rounded-md overflow-hidden"
+                    [ngClass]="{'ring-2 ring-blue-500 dark:ring-blue-400': i === currentImageIndex}">
+                    <img [src]="image.url" class="h-full w-full object-cover" [alt]="tool?.name + ' thumbnail'">
+                  </div>
+                </div>
+
+                <!-- Informacja o braku zdjęć -->
+                <div *ngIf="toolImages.length === 0"
+                  class="w-full h-64 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                  <span class="text-gray-500 dark:text-gray-400">Brak zdjęcia</span>
                 </div>
               </div>
+            </div>
 
-              <!-- Informacja o braku zdjęć -->
-              <div *ngIf="toolImages.length === 0"
-                class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                <span class="text-gray-500">Brak zdjęcia</span>
+            <!-- Opis -->
+            <div class="mb-6">
+              <h2 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Opis</h2>
+              <p class="text-gray-700 dark:text-gray-300">{{ tool?.description }}</p>
+            </div>
+
+            <!-- Szczegóły -->
+            <div class="mb-6">
+              <h2 class="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Szczegóły</h2>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Kategoria</p>
+                  <p class="font-medium text-gray-900 dark:text-white">{{ tool?.category }}</p>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Cena za dzień</p>
+                  <p class="font-medium text-gray-900 dark:text-white">{{ tool?.pricePerDay | currency:'PLN':'symbol':'1.2-2' }}</p>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 sm:col-span-2">
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Lokalizacja</p>
+                  <p class="font-medium text-gray-900 dark:text-white">{{ tool?.address }}</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Opis -->
-          <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-2">Opis</h2>
-            <p class="text-gray-700">{{ tool?.description }}</p>
-          </div>
+            <!-- Informacje o właścicielu -->
+            <div>
+              <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Właściciel</h2>
+              <div class="flex items-center">
+                <!-- Avatar właściciela -->
+                <div class="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full mr-4 overflow-hidden">
+                  <!-- <img *ngIf="tool?.owner?.avatarUrl" [src]="tool?.owner?.avatarUrl" class="w-full h-full object-cover" alt="Avatar"> -->
+                  <!-- <div *ngIf="!tool?.owner?.avatarUrl" class="w-full h-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-500 dark:text-blue-300">
+                    <span>{{ getInitials(tool?.owner?.firstName, tool?.owner?.lastName) }}</span>
+                  </div> -->
+                </div>
 
-          <!-- Szczegóły -->
-          <div class="mb-6">
-            <h2 class="text-xl font-semibold mb-2">Szczegóły</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="bg-gray-50 rounded-lg p-4">
-                <p class="text-sm text-gray-500">Kategoria</p>
-                <!-- <p class="font-medium">{{ getCategoryName(tool?.category) }}</p> -->
-                <p class="font-medium">{{ tool?.category }}</p>
-              </div>
-
-              <div class="bg-gray-50 rounded-lg p-4">
-                <p class="text-sm text-gray-500">Cena za dzień</p>
-                <p class="font-medium">{{ tool?.pricePerDay | currency:'PLN':'symbol':'1.2-2' }}</p>
-              </div>
-
-              <div class="bg-gray-50 rounded-lg p-4 sm:col-span-2">
-                <p class="text-sm text-gray-500">Lokalizacja</p>
-                <p class="font-medium">{{ tool?.address }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Informacje o właścicielu -->
-          <div>
-            <h2 class="text-xl font-semibold mb-4">Właściciel</h2>
-            <div class="flex items-center">
-              <!-- Avatar właściciela -->
-              <div class="w-12 h-12 bg-gray-300 rounded-full mr-4 overflow-hidden">
-                <!-- <img *ngIf="tool?.owner?.avatarUrl" [src]="tool?.owner?.avatarUrl" class="w-full h-full object-cover" alt="Avatar"> -->
-                <!-- <div *ngIf="!tool?.owner?.avatarUrl" class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500">
-                  <span>{{ getInitials(tool?.owner?.firstName, tool?.owner?.lastName) }}</span>
-                </div> -->
-              </div>
-
-              <!-- Dane właściciela -->
-              <div>
-                <h3 class="font-medium">{{ tool?.owner?.firstName }} {{ tool?.owner?.lastName }}</h3>
-                <p class="text-sm text-gray-500">Członek od: {{ tool?.owner?.created_at | date }}</p>
+                <!-- Dane właściciela -->
+                <div>
+                  <h3 class="font-medium text-gray-900 dark:text-white">{{ tool?.owner?.firstName }} {{ tool?.owner?.lastName }}</h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Członek od: {{ tool?.owner?.created_at | date }}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Sekcja boczna z rezerwacją i mapą -->
-    <div class="md:w-1/3">
-      <!-- Sekcja rezerwacji -->
-      <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-        <div class="bg-blue-600 text-white px-4 py-3">
-          <h2 class="text-lg font-semibold">Rezerwacja</h2>
-        </div>
-
-        <div class="p-4">
-          <!-- Komponent rezerwacji -->
-          <app-tool-availability [toolId]="toolId"></app-tool-availability>
-        </div>
-      </div>
-
-      <!-- Mapa lokalizacji -->
-      <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="bg-blue-600 text-white px-4 py-3">
-          <h2 class="text-lg font-semibold">Lokalizacja</h2>
-        </div>
-
-        <div class="p-4">
-          <!-- Mapa -->
-          <div class="w-full h-48 bg-gray-200 rounded-lg mb-2 overflow-hidden">
-            <!-- Tutaj można wstawić komponent mapy -->
-            <img *ngIf="tool?.latitude && tool?.longitude"
-              src="https://maps.googleapis.com/maps/api/staticmap?center={{tool?.latitude}},{{tool?.longitude}}&zoom=14&size=400x200&markers=color:red%7C{{tool?.latitude}},{{tool?.longitude}}&key={{googleMapsApiKey}}"
-              class="w-full h-full object-cover" alt="Mapa">
-            <div *ngIf="!tool?.latitude || !tool?.longitude" class="w-full h-full flex items-center justify-center">
-              <span class="text-gray-500">Brak informacji o lokalizacji</span>
-            </div>
+      <!-- Sekcja boczna z rezerwacją i mapą -->
+      <div class="md:w-1/3">
+        <!-- Sekcja rezerwacji -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6">
+          <div class="bg-blue-600 dark:bg-blue-700 text-white px-4 py-3">
+            <h2 class="text-lg font-semibold">Rezerwacja</h2>
           </div>
 
-          <!-- Adres -->
-          <p class="text-gray-700">{{ tool?.address }}</p>
+          <div class="p-4">
+            <!-- Komponent rezerwacji -->
+            <app-tool-availability
+            [toolId]="toolId"
+            [pricePerDay]="tool?.pricePerDay || 0">
+          </app-tool-availability>          </div>
+        </div>
+
+        <!-- Mapa lokalizacji -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+          <div class="bg-blue-600 dark:bg-blue-700 text-white px-4 py-3">
+            <h2 class="text-lg font-semibold">Lokalizacja</h2>
+          </div>
+
+          <div class="p-4">
+            <!-- Mapa -->
+            <div class="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-2 overflow-hidden">
+              <!-- Tutaj można wstawić komponent mapy -->
+              <img *ngIf="tool?.latitude && tool?.longitude"
+                src="https://maps.googleapis.com/maps/api/staticmap?center={{tool?.latitude}},{{tool?.longitude}}&zoom=14&size=400x200&markers=color:red%7C{{tool?.latitude}},{{tool?.longitude}}&key={{googleMapsApiKey}}"
+                class="w-full h-full object-cover" alt="Mapa">
+              <div *ngIf="!tool?.latitude || !tool?.longitude" class="w-full h-full flex items-center justify-center">
+                <span class="text-gray-500 dark:text-gray-400">Brak informacji o lokalizacji</span>
+              </div>
+            </div>
+
+            <!-- Adres -->
+            <p class="text-gray-700 dark:text-gray-300">{{ tool?.address }}</p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../../environments/enviroment';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { Tool } from '../models/tool.model';
 import { DailyAvailability } from '../models/daily-availability.model';
@@ -13,7 +13,6 @@ export class ToolService {
   private http = inject(HttpClient);
 
   private apiUrl = `${environment.apiUrl}/api/v1/tools`;
-  private reservationApiUrl = `${environment.apiUrl}/api/v1/reservations`;
 
   private searchTermSubject = new BehaviorSubject<string>('');
   searchTerm$ = this.searchTermSubject.asObservable();
@@ -34,10 +33,6 @@ export class ToolService {
     return this.http.get<DailyAvailability[]>(
       `${this.apiUrl}/${toolId}/availability?startDate=${startDate}&endDate=${endDate}`
     );
-  }
-
-  createReservation(reservationData: any): Observable<any> {
-    return this.http.post(`${this.reservationApiUrl}/create`, reservationData);
   }
 
   searchTools(
@@ -63,6 +58,17 @@ export class ToolService {
   // Opcjonalnie: metoda aktualizacji terminu wyszukiwania
   setSearchTerm(term: string) {
     this.searchTermSubject.next(term);
+  }
+
+  getMyTools(page: number = 0, size: number = 10, sortBy: string = 'id', sortDirection: string = 'desc'): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/my-tools`, {
+      params: {
+        page: page.toString(),
+        size: size.toString(),
+        sortBy: sortBy,
+        sortDirection: sortDirection
+      }
+    });
   }
 
 

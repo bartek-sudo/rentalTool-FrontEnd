@@ -27,4 +27,16 @@ export const routes: Routes = [
     path: 'tools',
     loadComponent: () => import('./features/tool/components/tools-list/tools-list.component').then(m => m.ToolsListComponent)
   },
+  {
+    path: 'my-tools',
+    loadComponent: () => import('./features/tool/components/my-tools/my-tools.component').then(m => m.MyToolsComponent)
+  },
+  {
+    path: 'my-rentals',
+    loadComponent: () => import('./features/reservation/components/my-rentals/my-rentals.component').then(m => m.MyRentalsComponent)
+  },
+  {
+    path: 'my-tool-reservations',
+    loadComponent: () => import('./features/reservation/components/my-tool-reservations/my-tool-reservations.component').then(m => m.MyToolReservationsComponent)
+  }
 ];

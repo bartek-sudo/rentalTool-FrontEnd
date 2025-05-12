@@ -1,0 +1,134 @@
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="container mx-auto px-4 py-8">
+    <!-- Nagłówek -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+        Rezerwacje moich narzędzi
+      </h1>
+
+      <!-- Filtry statusu -->
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button
+          *ngFor="let filter of statusFilters"
+          (click)="setStatusFilter(filter.value)"
+          [ngClass]="{'bg-blue-600 text-white dark:bg-blue-700': activeStatusFilter === filter.value,
+                      'bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200': activeStatusFilter !== filter.value}"
+          class="px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
+        >
+          {{ filter.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Error message -->
+    <div *ngIf="errorMessage" class="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200/10 dark:text-red-400" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Lista rezerwacji -->
+    <div *ngIf="!isLoading && filterReservations().length > 0" class="space-y-6">
+      <div *ngFor="let reservation of filterReservations()" class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="p-6">
+          <!-- Dane narzędzia i rezerwacji -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-4">
+            <div class="mb-4 lg:mb-0 lg:mr-6">
+              <h2 *ngIf="reservation.tool" class="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                {{ reservation.tool.name }}
+              </h2>
+              <p *ngIf="!reservation.tool" class="text-gray-600 dark:text-gray-400">
+                Ładowanie danych narzędzia...
+              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-gray-500 dark:text-gray-400 text-sm">
+                  Od {{ formatDate(reservation.startDate) }} do {{ formatDate(reservation.endDate) }}
+                </span>
+                <span [ngClass]="getStatusColor(reservation.status)" class="px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  {{ translateStatus(reservation.status) }}
+                </span>
+              </div>
+            </div>
+            <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
+              {{ reservation.totalPrice | currency:'PLN' }}
+            </div>
+          </div>
+
+          <!-- Informacje o najemcy -->
+          <div *ngIf="reservation.renter" class="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div class="flex items-center">
+              <!-- Avatar najemcy -->
+              <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 dark:bg-green-900/30 dark:text-green-400 mr-3">
+                {{ reservation.renter.firstName.charAt(0) }}{{ reservation.renter.lastName.charAt(0) }}
+              </div>
+              <div>
+                <p class="font-medium text-gray-900 dark:text-white">{{ reservation.renter.firstName }} {{ reservation.renter.lastName }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Najemca</p>
+              </div>
+
+              <!-- Kontakt -->
+              <div class="ml-auto">
+                <a *ngIf="reservation.renter.email" href="mailto:{{ reservation.renter.email }}" class="text-blue-600 dark:text-blue-400 text-sm hover:underline flex items-center">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                  Kontakt
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Przyciski akcji -->
+          <div class="mt-4 flex flex-wrap gap-2">
+            <a [routerLink]="['/tool', reservation.toolId]" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-800">
+              Zobacz narzędzie
+            </a>
+
+            <!-- Przycisk potwierdź - widoczny tylko gdy status PENDING -->
+            <button
+              *ngIf="reservation.status === ReservationStatus.PENDING"
+              (click)="confirmReservation(reservation.id)"
+              class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 dark:bg-green-700 dark:hover:bg-green-800 dark:focus:ring-green-800">
+              Potwierdź
+            </button>
+
+            <!-- Przycisk szczegóły -->
+            <a [routerLink]="['/reservations', reservation.id]" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-gray-900 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700">
+              Szczegóły
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brak rezerwacji -->
+    <div *ngIf="!isLoading && filterReservations().length === 0" class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+      <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+      </svg>
+
+      <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white" *ngIf="reservations.length === 0">
+        Nie masz jeszcze żadnych rezerwacji
+      </h3>
+      <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white" *ngIf="reservations.length > 0">
+        Brak rezerwacji o wybranym statusie
+      </h3>
+
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" *ngIf="reservations.length === 0">
+        Osoby zainteresowane Twoimi narzędziami będą tutaj składać rezerwacje.
+      </p>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" *ngIf="reservations.length > 0">
+        Wybierz inny filtr, aby zobaczyć więcej rezerwacji.
+      </p>
+
+      <div class="mt-6" *ngIf="reservations.length === 0">
+        <a routerLink="/my-tools" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-800">
+          Przejdź do moich narzędzi
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

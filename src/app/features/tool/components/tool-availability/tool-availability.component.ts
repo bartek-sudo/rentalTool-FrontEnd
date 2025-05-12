@@ -2,6 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DailyAvailability } from '../../models/daily-availability.model';
 import { ToolService } from '../../services/tool.service';
+import { ReservationService } from '../../../reservation/services/reservation.service';
 
 @Component({
   selector: 'app-tool-availability',
@@ -27,7 +28,10 @@ export class ToolAvailabilityComponent implements OnInit {
   // Kalendarz - tablica dni
   calendarDays: any[] = [];
 
-  constructor(private toolService: ToolService) { }
+  constructor(
+    private toolService: ToolService,
+    private reservationService: ReservationService
+  ) { }
 
   ngOnInit(): void {
     this.loadAvailabilityData();
@@ -276,7 +280,7 @@ export class ToolAvailabilityComponent implements OnInit {
       toolId: this.toolId
     };
 
-    this.toolService.createReservation(reservationData)
+    this.reservationService.createReservation(reservationData)
       .subscribe({
         next: () => {
           alert(`Rezerwacja potwierdzona od ${this.formatDate(this.selectedStartDate)} do ${this.formatDate(this.selectedEndDate)}`);

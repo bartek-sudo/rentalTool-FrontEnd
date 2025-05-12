@@ -7,7 +7,8 @@ export interface Tool {
   description: string;
   pricePerDay: number;
   category: Category;
-  owner: User;
+  ownerId: number;
+  owner?: User;
   address: string;
   latitude?: number;
   longitude?: number;

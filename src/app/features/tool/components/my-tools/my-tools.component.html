@@ -1,0 +1,132 @@
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="container mx-auto px-4 py-8">
+    <!-- Nagłówek -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+        Moje narzędzia
+      </h1>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center">
+          <label for="sort-select" class="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Sortuj:
+          </label>
+          <select
+            id="sort-select"
+            [(ngModel)]="selectedSort"
+            (change)="onSortChange()"
+            class="min-w-[180px] p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+          >
+            <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+        <a routerLink="/tools/create" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-800">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Dodaj narzędzie
+        </a>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Error message -->
+    <div *ngIf="errorMessage" class="p-4 mb-6 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200/10 dark:text-red-400" role="alert">
+      {{ errorMessage }}
+    </div>
+
+    <!-- Lista narzędzi -->
+    <div *ngIf="!isLoading && tools.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngFor="let tool of tools" class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+        <img *ngIf="tool.mainImageUrl" [src]="tool.mainImageUrl" [alt]="tool.name" class="w-full h-48 object-cover">
+        <div *ngIf="!tool.mainImageUrl" class="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+          <svg class="w-12 h-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div class="p-6">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{tool.name}}</h2>
+          <p class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">{{tool.description}}</p>
+          <div class="flex justify-between items-center">
+            <span class="text-lg font-bold text-blue-600 dark:text-blue-400">{{tool.pricePerDay | currency:'PLN'}}/dzień</span>
+            <div class="flex gap-2">
+              <a [routerLink]="['/tool', tool.id]" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-800">
+                Podgląd
+              </a>
+              <a [routerLink]="['/tools/edit', tool.id]" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-gray-900 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700">
+                Edytuj
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brak narzędzi -->
+    <div *ngIf="!isLoading && tools.length === 0" class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+      <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 13a4 4 0 100-8 4 4 0 000 8z"></path>
+      </svg>
+      <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white">Nie masz jeszcze żadnych narzędzi</h3>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Dodaj swoje pierwsze narzędzie, aby móc je wypożyczać innym.</p>
+      <div class="mt-6">
+        <a routerLink="/tools/create" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-800">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Dodaj narzędzie
+        </a>
+      </div>
+    </div>
+
+    <!-- Paginacja -->
+    <div *ngIf="totalPages > 1" class="mt-8 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 px-4 py-3 sm:px-6">
+      <div class="flex flex-1 justify-between sm:hidden">
+        <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 0"
+          class="relative inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">
+          Poprzednia
+        </button>
+        <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages - 1"
+          class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50">
+          Następna
+        </button>
+      </div>
+      <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            Pokazano <span class="font-medium">{{(currentPage * pageSize) + 1}}</span> do <span class="font-medium">{{(currentPage + 1) * pageSize > totalItems ? totalItems : (currentPage + 1) * pageSize}}</span> z <span class="font-medium">{{totalItems}}</span> wyników
+          </p>
+        </div>
+        <div>
+          <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+            <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 0"
+              class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
+              <span class="sr-only">Poprzednia</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <button *ngFor="let page of getPageNumbers()"
+              (click)="changePage(page)"
+              [ngClass]="{'bg-blue-600 dark:bg-blue-700 text-white': page === currentPage, 'text-gray-900 dark:text-gray-300 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700': page !== currentPage}"
+              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0">
+              {{page + 1}}
+            </button>
+
+            <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages - 1"
+              class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
+              <span class="sr-only">Następna</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

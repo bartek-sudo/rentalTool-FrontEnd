@@ -32,6 +32,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/tool/components/my-tools/my-tools.component').then(m => m.MyToolsComponent)
   },
   {
+    path: 'create-tool',
+    loadComponent: () => import('./features/tool/components/create-tool/create-tool.component').then(m => m.CreateToolComponent)
+  },
+  {
     path: 'my-rentals',
     loadComponent: () => import('./features/reservation/components/my-rentals/my-rentals.component').then(m => m.MyRentalsComponent)
   },

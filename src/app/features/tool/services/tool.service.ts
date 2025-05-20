@@ -25,6 +25,10 @@ export class ToolService {
     );
   }
 
+  createTool(toolData: any): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/create`, toolData);
+  }
+
   getToolImages(toolId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/${toolId}/images`);
   }

@@ -1,0 +1,226 @@
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+      <!-- Nagłówek -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+          Dodaj nowe narzędzie
+        </h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">
+          Wypełnij poniższy formularz, aby dodać narzędzie do wypożyczenia
+        </p>
+      </div>
+
+      <!-- Komunikaty -->
+      <div *ngIf="errorMessage"
+        class="mb-6 p-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200/10 dark:text-red-400" role="alert">
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="successMessage"
+        class="mb-6 p-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200/10 dark:text-green-400"
+        role="alert">
+        {{ successMessage }}
+      </div>
+
+      <!-- Formularz -->
+      <form [formGroup]="toolForm" (ngSubmit)="onSubmit()" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <!-- Nazwa narzędzia -->
+        <div class="mb-6">
+          <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            Nazwa narzędzia <span class="text-red-500">*</span>
+          </label>
+          <input type="text" id="name" formControlName="name"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            placeholder="Np. Wiertarka udarowa Bosch">
+          <div *ngIf="nameControl?.invalid && nameControl?.touched" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            <div *ngIf="nameControl?.errors?.['required']">Nazwa jest wymagana</div>
+            <div *ngIf="nameControl?.errors?.['minlength']">Nazwa musi mieć co najmniej 3 znaki</div>
+            <div *ngIf="nameControl?.errors?.['maxlength']">Nazwa nie może być dłuższa niż 100 znaków</div>
+          </div>
+        </div>
+
+        <!-- Kategoria -->
+        <div class="mb-6">
+          <label for="category" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            Kategoria <span class="text-red-500">*</span>
+          </label>
+          <select id="category" formControlName="category"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <option value="" selected disabled>Wybierz kategorię</option>
+            <option *ngFor="let category of categories" [value]="category">
+              {{ category === 'OTHER' ? 'Inne' : formatCategoryName(category) }}
+            </option>
+          </select>
+          <div *ngIf="categoryControl?.invalid && categoryControl?.touched"
+            class="mt-1 text-sm text-red-600 dark:text-red-400">
+            <div *ngIf="categoryControl?.errors?.['required']">Kategoria jest wymagana</div>
+          </div>
+        </div>
+
+        <!-- Cena za dzień -->
+        <div class="mb-6">
+          <label for="pricePerDay" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            Cena za dzień (PLN) <span class="text-red-500">*</span>
+          </label>
+          <input type="number" id="pricePerDay" formControlName="pricePerDay" min="1" step="0.1"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            placeholder="Np. 50">
+          <div *ngIf="pricePerDayControl?.invalid && pricePerDayControl?.touched"
+            class="mt-1 text-sm text-red-600 dark:text-red-400">
+            <div *ngIf="pricePerDayControl?.errors?.['required']">Cena jest wymagana</div>
+            <div *ngIf="pricePerDayControl?.errors?.['min']">Cena musi być większa od 0</div>
+          </div>
+        </div>
+
+        <!-- Opis -->
+        <div class="mb-6">
+          <label for="description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            Opis narzędzia <span class="text-red-500">*</span>
+          </label>
+          <textarea id="description" rows="4" formControlName="description"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            placeholder="Opisz stan, parametry, akcesoria dodatkowe itp."></textarea>
+          <div *ngIf="descriptionControl?.invalid && descriptionControl?.touched"
+            class="mt-1 text-sm text-red-600 dark:text-red-400">
+            <div *ngIf="descriptionControl?.errors?.['required']">Opis jest wymagany</div>
+            <div *ngIf="descriptionControl?.errors?.['minlength']">Opis musi mieć co najmniej 20 znaków</div>
+            <div *ngIf="descriptionControl?.errors?.['maxlength']">Opis nie może być dłuższy niż 1000 znaków</div>
+          </div>
+        </div>
+
+
+        <!-- Adres -->
+        <div class="mb-6">
+          <label for="address" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            Adres narzędzia <span class="text-red-500">*</span>
+          </label>
+          <div class="relative">
+            <input type="text" id="address" #addressInput formControlName="address"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 pl-10 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="Np. ul. Przykładowa 123, 00-000 Warszawa">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div *ngIf="addressControl?.invalid && addressControl?.touched"
+            class="mt-1 text-sm text-red-600 dark:text-red-400">
+            <div *ngIf="addressControl?.errors?.['required']">Adres jest wymagany</div>
+            <div *ngIf="addressControl?.errors?.['minlength']">Adres musi mieć co najmniej 5 znaków</div>
+            <div *ngIf="addressControl?.errors?.['maxlength']">Adres nie może być dłuższy niż 200 znaków</div>
+          </div>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Możesz wpisać adres ręcznie lub wybrać punkt na mapie. Ten adres będzie widoczny dla innych użytkowników
+            jako lokalizacja narzędzia.
+          </p>
+        </div>
+
+        <div class="mb-6">
+          <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            Wybierz lokalizację na mapie <span class="text-red-500">*</span>
+          </label>
+
+          <div class="relative">
+            <!-- Komunikat o ładowaniu lokalizacji -->
+            <div *ngIf="isLoadingLocation"
+              class="absolute inset-0 z-10 flex items-center justify-center bg-gray-100/70 dark:bg-gray-700/70 rounded-lg">
+              <div class="flex items-center space-x-2">
+                <svg class="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg"
+                  fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
+                </svg>
+                <span class="text-sm text-gray-600 dark:text-gray-300">Pobieranie lokalizacji...</span>
+              </div>
+            </div>
+
+            <!-- Kontener na mapę -->
+            <div #mapContainer id="map" class="h-72 w-full rounded-lg"></div>
+
+            <!-- Przycisk do pobrania aktualnej lokalizacji -->
+            <button type="button" (click)="tryGetCurrentLocation()"
+              class="absolute right-2 top-2 p-2 bg-white dark:bg-gray-700 rounded-lg shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:focus:ring-blue-600"
+              title="Pobierz aktualną lokalizację">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Informacje o wybranej lokalizacji -->
+          <div *ngIf="toolForm.get('latitude')?.value && toolForm.get('longitude')?.value"
+            class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+            <div class="flex items-center text-blue-700 dark:text-blue-300 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Lokalizacja wybrana: Szerokość {{ toolForm.get('latitude')?.value | number:'1.6-6' }}, Długość {{
+                toolForm.get('longitude')?.value | number:'1.6-6' }}</span>
+            </div>
+          </div>
+
+          <!-- Komunikat o braku lokalizacji -->
+          <div *ngIf="!toolForm.get('latitude')?.value || !toolForm.get('longitude')?.value"
+            class="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
+            <div class="flex items-center text-red-700 dark:text-red-400 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Lokalizacja jest wymagana. Kliknij na mapie, aby wybrać.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ukryte pola z geolokalizacją -->
+        <input type="hidden" formControlName="latitude">
+        <input type="hidden" formControlName="longitude">
+
+        <!-- Przyciski -->
+        <div class="flex justify-between mt-8">
+          <button type="button" routerLink="/my-tools"
+            class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+            Anuluj
+          </button>
+          <button type="submit" [disabled]="isSubmitting"
+            class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="!isSubmitting">Dodaj narzędzie</span>
+            <span *ngIf="isSubmitting" class="flex items-center">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              Dodawanie...
+            </span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Informacja o dodawaniu zdjęć -->
+      <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
+        <p class="text-blue-700 dark:text-blue-300">
+          <span class="font-medium">Wskazówka:</span> Po dodaniu narzędzia będziesz mógł/mogła dodać zdjęcia, które
+          zwiększą szansę na wypożyczenie.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

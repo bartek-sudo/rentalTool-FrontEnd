@@ -1,11 +1,11 @@
-import { Component, ElementRef, OnInit, Renderer2, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToolService } from '../../services/tool.service';
-import { Router, RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { Category } from '../../models/category.model';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { environment } from '../../../../../environments/enviroment';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Category } from '../../models/category.model';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { CommonModule } from '@angular/common';
 
 // Definicje interfejsów dla Google Maps
 interface GoogleMapPosition {
@@ -42,40 +42,27 @@ interface GoogleGeocodeResult {
   formatted_address: string;
 }
 
-// Interface dla podglądu zdjęć
-interface ImagePreview {
-  file: File;
-  url: string;
-  isMain: boolean;
-}
-
 @Component({
-  selector: 'app-create-tool',
+  selector: 'app-edit-tool',
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
-  templateUrl: './create-tool.component.html',
-  styleUrl: './create-tool.component.css',
-  standalone: true
+  templateUrl: './edit-tool.component.html',
+  styleUrl: './edit-tool.component.css'
 })
-export class CreateToolComponent implements OnInit, AfterViewInit {
-  @ViewChild('mapContainer') mapContainer!: ElementRef;
+export class EditToolComponent {
+   @ViewChild('mapContainer') mapContainer!: ElementRef;
   @ViewChild('addressInput') addressInput!: ElementRef;
-  @ViewChild('fileInput') fileInput!: ElementRef;
 
   toolForm: FormGroup;
   isSubmitting: boolean = false;
   isLoadingLocation: boolean = false;
+  isLoadingTool: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
+  toolId: number = 0;
+  currentTool: any = null;
 
   // Kategorie zgodne z backendem
   categories = Object.values(Category);
-
-  // Zmienne dla zdjęć
-  selectedImages: ImagePreview[] = [];
-  maxImages: number = 10;
-  maxFileSize: number = 5 * 1024 * 1024; // 5MB
-  allowedFileTypes: string[] = ['image/jpeg', 'image/png', 'image/webp'];
-  isDragOver: boolean = false;
 
   private googleMapsApiKey = environment.googleMapsApiKey;
   // Zmienne mapy
@@ -88,6 +75,7 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
     private fb: FormBuilder,
     private toolService: ToolService,
     private router: Router,
+    private route: ActivatedRoute,
     private renderer: Renderer2
   ) {
     this.toolForm = this.fb.group({
@@ -97,11 +85,22 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
       pricePerDay: [null, [Validators.required, Validators.min(1)]],
       address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
       latitude: [null, Validators.required],
-      longitude: [null, Validators.required]
+      longitude: [null, Validators.required],
+      isActive: [true]
     });
   }
 
   ngOnInit(): void {
+    // Pobierz ID narzędzia z parametrów routingu
+    this.route.params.subscribe(params => {
+      this.toolId = +params['id'];
+      if (this.toolId) {
+        this.loadToolData();
+      } else {
+        this.errorMessage = 'Nieprawidłowy identyfikator narzędzia';
+      }
+    });
+
     // Dodanie skryptu Google Maps do strony
     this.loadGoogleMapsScript();
 
@@ -125,6 +124,52 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
     // Mapa zostanie załadowana po załadowaniu skryptu Google Maps
   }
 
+  private loadToolData(): void {
+    this.isLoadingTool = true;
+    this.toolService.getToolById(this.toolId).subscribe({
+      next: (tool) => {
+        this.currentTool = tool;
+        this.populateForm();
+        this.isLoadingTool = false;
+      },
+      error: (error) => {
+        this.errorMessage = error.error?.message || 'Nie udało się załadować danych narzędzia';
+        this.isLoadingTool = false;
+      }
+    });
+  }
+
+  private populateForm(): void {
+    if (this.currentTool) {
+      this.toolForm.patchValue({
+        name: this.currentTool.name,
+        description: this.currentTool.description,
+        category: this.currentTool.category,
+        pricePerDay: this.currentTool.pricePerDay,
+        address: this.currentTool.address,
+        latitude: this.currentTool.latitude,
+        longitude: this.currentTool.longitude,
+        isActive: this.currentTool.isActive
+      });
+
+      // Zaktualizuj mapę jeśli jest już załadowana
+      if (this.map && this.marker) {
+        this.updateMapWithToolLocation();
+      }
+    }
+  }
+
+  private updateMapWithToolLocation(): void {
+    if (this.currentTool && this.map && this.marker) {
+      const location = {
+        lat: this.currentTool.latitude,
+        lng: this.currentTool.longitude
+      };
+      this.map.setCenter(location);
+      this.marker.setPosition(location);
+    }
+  }
+
   private loadGoogleMapsScript(): void {
     // Definiujemy globalną funkcję callback
     (window as any).initMap = () => {
@@ -140,7 +185,6 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
     // Dodaj skrypt Google Maps do strony
     const script = this.renderer.createElement('script');
     script.type = 'text/javascript';
-    // Pamiętaj, aby zastąpić YOUR_API_KEY własnym kluczem API
     script.src = `https://maps.googleapis.com/maps/api/js?key=${this.googleMapsApiKey}&libraries=places&callback=initMap`;
     script.defer = true;
     script.async = true;
@@ -162,8 +206,11 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
     }
 
     try {
-      // Domyślna lokalizacja (Kraków)
-      const defaultLocation = {
+      // Użyj lokalizacji z narzędzia lub domyślnej (Kraków)
+      const defaultLocation = this.currentTool ? {
+        lat: this.currentTool.latitude,
+        lng: this.currentTool.longitude
+      } : {
         lat: 50.0647,
         lng: 19.9450
       };
@@ -209,8 +256,10 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
       // Inicjalizacja autouzupełniania dla pola adresu
       this.initAutocomplete();
 
-      // Pobierz aktualną lokalizację użytkownika
-      this.tryGetCurrentLocation();
+      // Jeśli mamy już dane narzędzia, zaktualizuj mapę
+      if (this.currentTool) {
+        this.updateMapWithToolLocation();
+      }
     } catch (error) {
       console.error('Błąd podczas inicjalizacji mapy:', error);
       this.errorMessage = 'Nie udało się załadować mapy. Spróbuj odświeżyć stronę.';
@@ -383,119 +432,6 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
     );
   }
 
-  // ========== METODY DO OBSŁUGI ZDJĘĆ ==========
-
-  onFileSelect(event: any): void {
-    const files = event.target.files;
-    this.handleFiles(files);
-    // Resetuj input aby można było wybrać te same pliki ponownie
-    event.target.value = '';
-  }
-
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver = true;
-  }
-
-  onDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver = false;
-  }
-
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDragOver = false;
-
-    const files = event.dataTransfer?.files;
-    if (files) {
-      this.handleFiles(files);
-    }
-  }
-
-private handleFiles(files: FileList): void {
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-
-    if (!this.validateFile(file)) {
-      continue;
-    }
-
-    if (this.selectedImages.length >= this.maxImages) {
-      this.errorMessage = `Możesz dodać maksymalnie ${this.maxImages} zdjęć.`;
-      break;
-    }
-
-    // Sprawdź czy plik już nie został dodany
-    if (this.selectedImages.some(img =>
-        img.file.name === file.name &&
-        img.file.size === file.size &&
-        img.file.lastModified === file.lastModified)) {
-      continue;
-    }
-
-    // Utwórz URL do podglądu
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const imagePreview: ImagePreview = {
-        file: file,
-        url: e.target?.result as string,
-        isMain: this.selectedImages.length === 0 // Tylko pierwsze zdjęcie jest główne
-      };
-      this.selectedImages.push(imagePreview);
-      this.errorMessage = '';
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-  private validateFile(file: File): boolean {
-    // Sprawdź typ pliku
-    if (!this.allowedFileTypes.includes(file.type)) {
-      this.errorMessage = 'Dozwolone są tylko pliki JPG, PNG i WebP.';
-      return false;
-    }
-
-    // Sprawdź rozmiar pliku
-    if (file.size > this.maxFileSize) {
-      this.errorMessage = 'Plik jest za duży. Maksymalny rozmiar to 5MB.';
-      return false;
-    }
-
-    return true;
-  }
-
-removeImage(index: number): void {
-  const wasMain = this.selectedImages[index].isMain;
-  this.selectedImages.splice(index, 1);
-
-  // Jeśli usunięte zdjęcie było główne i są jeszcze inne zdjęcia
-  if (wasMain && this.selectedImages.length > 0) {
-    this.selectedImages[0].isMain = true;
-  }
-
-  if (this.selectedImages.length < this.maxImages) {
-    this.errorMessage = '';
-  }
-}
-
-setMainImage(index: number): void {
-  if (this.selectedImages[index].isMain) {
-    return;
-  }
-
-  this.selectedImages.forEach(img => img.isMain = false);
-  this.selectedImages[index].isMain = true;
-}
-
-  triggerFileInput(): void {
-    this.fileInput.nativeElement.click();
-  }
-
-  // ========== KONIEC METOD DO OBSŁUGI ZDJĘĆ ==========
-
   onSubmit(): void {
     if (this.toolForm.invalid) {
       this.markFormGroupTouched(this.toolForm);
@@ -514,74 +450,61 @@ setMainImage(index: number): void {
       return;
     }
 
-    // Najpierw stwórz narzędzie
-    this.toolService.createTool(formData).subscribe({
+    this.toolService.updateTool(this.toolId, formData).subscribe({
       next: (response) => {
-        const toolId = response.data.Tool.id;
+        this.isSubmitting = false;
+        this.successMessage = 'Narzędzie zostało pomyślnie zaktualizowane!';
 
-        // Jeśli są zdjęcia, prześlij je
-        if (this.selectedImages.length > 0) {
-          this.uploadImages(toolId);
-        } else {
-          this.onToolCreated(toolId);
-        }
+        // Przekieruj do strony szczegółów narzędzia
+        setTimeout(() => {
+          this.router.navigate(['/tool', this.toolId]);
+        }, 1500);
       },
       error: (error) => {
         this.isSubmitting = false;
-        this.errorMessage = error.error?.message || 'Wystąpił błąd podczas dodawania narzędzia. Spróbuj ponownie.';
-        console.error('Błąd podczas dodawania narzędzia:', error);
+        this.errorMessage = error.error?.message || 'Wystąpił błąd podczas aktualizacji narzędzia. Spróbuj ponownie.';
+        console.error('Błąd podczas aktualizacji narzędzia:', error);
       }
     });
   }
 
-private uploadImages(toolId: number): void {
-  // Sprawdź czy istnieje główne zdjęcie
-  const hasMainImage = this.selectedImages.some(img => img.isMain);
+  onToggleStatus(): void {
+  const action = this.currentTool?.isActive ? 'dezaktywować' : 'aktywować';
+  const actionUpper = this.currentTool?.isActive ? 'Dezaktywować' : 'Aktywować';
 
-  // Jeśli żadne zdjęcie nie jest główne, ustaw pierwsze jako główne
-  if (!hasMainImage && this.selectedImages.length > 0) {
-    this.selectedImages[0].isMain = true;
+  const confirmMessage = this.currentTool?.isActive
+    ? 'Czy na pewno chcesz dezaktywować to narzędzie? Zostanie ono ukryte w wynikach wyszukiwania, ale istniejące rezerwacje pozostaną aktywne.'
+    : 'Czy na pewno chcesz aktywować to narzędzie? Stanie się ono ponownie widoczne w wynikach wyszukiwania.';
+
+  if (confirm(confirmMessage)) {
+    this.isSubmitting = true;
+    this.errorMessage = '';
+
+    const operation = this.currentTool?.isActive
+      ? this.toolService.deactivateTool(this.toolId)
+      : this.toolService.activateTool(this.toolId);
+
+    operation.subscribe({
+      next: (response) => {
+        this.isSubmitting = false;
+        this.successMessage = `Narzędzie zostało pomyślnie ${this.currentTool?.isActive ? 'dezaktywowane' : 'aktywowane'}!`;
+
+        // Zaktualizuj dane narzędzia
+        this.currentTool = response;
+
+        // Opcjonalnie: przekieruj do listy narzędzi po pewnym czasie
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      },
+      error: (error) => {
+        this.isSubmitting = false;
+        this.errorMessage = error.error?.message || `Wystąpił błąd podczas ${action}owania narzędzia. Spróbuj ponownie.`;
+        console.error(`Błąd podczas ${action}owania narzędzia:`, error);
+      }
+    });
   }
-
-  // Wysyłaj zdjęcia sekwencyjnie
-  this.uploadImageSequentially(toolId, 0);
 }
-
-
-private uploadImageSequentially(toolId: number, index: number): void {
-  // Jeśli wszystkie zdjęcia zostały przesłane
-  if (index >= this.selectedImages.length) {
-    this.onToolCreated(toolId);
-    return;
-  }
-
-  const imagePreview = this.selectedImages[index];
-  const formData = new FormData();
-  formData.append('file', imagePreview.file);
-  formData.append('isMain', imagePreview.isMain.toString());
-
-  this.toolService.uploadToolImage(toolId, formData).subscribe({
-    next: (response) => {
-      // Przejdź do następnego zdjęcia
-      this.uploadImageSequentially(toolId, index + 1);
-    },
-    error: (error) => {
-      console.error(`Error uploading image ${index + 1}:`, error);
-      // Mimo błędu, przejdź do następnego zdjęcia
-      this.uploadImageSequentially(toolId, index + 1);
-    }
-  });
-}
-
-  private onToolCreated(toolId: number): void {
-    this.isSubmitting = false;
-    this.successMessage = 'Narzędzie zostało pomyślnie dodane!';
-
-    // Przekieruj do strony szczegółów nowego narzędzia
-    setTimeout(() => {
-      this.router.navigate(['/tool', toolId]);
-    }, 1500);
-  }
 
   // Pomocnicza metoda do oznaczania wszystkich pól jako dotknięte (dla walidacji)
   markFormGroupTouched(formGroup: FormGroup) {
@@ -607,4 +530,5 @@ private uploadImageSequentially(toolId: number, index: number): void {
       .toLowerCase()
       .replace(/\b\w/g, char => char.toUpperCase());
   }
+
 }

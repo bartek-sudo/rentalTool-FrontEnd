@@ -15,5 +15,5 @@ export interface Tool {
   mainImageUrl: string;
   createdAt: string;
   updatedAt: string;
-  isAvailable?: boolean;
+  isActive: boolean;
 }

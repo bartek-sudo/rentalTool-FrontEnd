@@ -5,6 +5,16 @@ import { BehaviorSubject, map, Observable } from 'rxjs';
 import { Tool } from '../models/tool.model';
 import { DailyAvailability } from '../models/daily-availability.model';
 import { ToolApiResponse } from '../models/tool-api-response.model';
+import { ToolUpdateRequest } from '../models/tool-update-request.model';
+
+export interface ApiResponse<T> {
+  timeStamp: string;
+  statusCode: number;
+  httpStatus: string;
+  reason: string;
+  message: string;
+  data: T;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -29,8 +39,24 @@ export class ToolService {
     return this.http.post<any>(`${this.apiUrl}/create`, toolData);
   }
 
+  updateTool(toolId: number, toolData: ToolUpdateRequest): Observable<ApiResponse<{ Tool: Tool }>> {
+    return this.http.put<ApiResponse<{ Tool: Tool }>>(`${this.apiUrl}/${toolId}`, toolData);
+  }
+
+  deactivateTool(toolId: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${toolId}/deactivate`, {});
+  }
+
+  activateTool(toolId: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${toolId}/activate`, {});
+  }
+
   getToolImages(toolId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/${toolId}/images`);
+  }
+
+  uploadToolImage(toolId: number, formData: FormData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${toolId}/images`, formData);
   }
 
   getToolAvailability(toolId: number, startDate: string, endDate: string): Observable<DailyAvailability[]> {

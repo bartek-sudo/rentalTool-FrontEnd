@@ -1,0 +1,151 @@
+/* Animacje dla drag & drop */
+.drag-over {
+  border-color: #3b82f6 !important;
+  background-color: #eff6ff !important;
+}
+
+.dark .drag-over {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Stylowanie dla podglądu zdjęć */
+.image-preview-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.image-preview-container:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-preview-container img {
+  transition: all 0.3s ease;
+}
+
+.image-preview-container:hover img {
+  filter: brightness(0.9);
+}
+
+/* Animacja dla przycisków akcji */
+.action-buttons {
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Stylowanie dla oznaczenia zdjęcia głównego */
+.main-image-badge {
+  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Hover effects dla przycisków */
+.action-button {
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  transform: scale(1.1);
+}
+
+/* Responsywne siatki */
+@media (max-width: 640px) {
+  .image-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .image-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 769px) {
+  .image-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+}
+
+/* Animacja ładowania */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Stylowanie dla komunikatów */
+.success-message {
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+.error-message {
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stylowanie dla drag zone */
+.drag-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.drag-zone:hover {
+  border-color: #9ca3af;
+  background-color: #f9fafb;
+}
+
+.dark .drag-zone {
+  border-color: #4b5563;
+}
+
+.dark .drag-zone:hover {
+  border-color: #6b7280;
+  background-color: #111827;
+}
+
+/* Focus states dla accessibility */
+.file-input-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Stylowanie dla tooltipów */
+[title] {
+  position: relative;
+}
+
+/* Animacja dla zmiany zdjęcia głównego */
+.main-image-transition {
+  transition: all 0.3s ease;
+}
+
+/* Progress bar dla uploadowania (opcjonalne) */
+.upload-progress {
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}

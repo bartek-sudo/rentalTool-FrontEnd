@@ -36,6 +36,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/tool/components/create-tool/create-tool.component').then(m => m.CreateToolComponent)
   },
   {
+    path: 'edit-tool/:id',
+    loadComponent: () => import('./features/tool/components/edit-tool/edit-tool.component').then(m => m.EditToolComponent)
+  },
+  {
     path: 'my-rentals',
     loadComponent: () => import('./features/reservation/components/my-rentals/my-rentals.component').then(m => m.MyRentalsComponent)
   },

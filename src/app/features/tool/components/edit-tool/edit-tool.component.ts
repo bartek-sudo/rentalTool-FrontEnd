@@ -42,6 +42,24 @@ interface GoogleGeocodeResult {
   formatted_address: string;
 }
 
+// Interface dla podglądu nowych zdjęć
+interface ImagePreview {
+  file: File;
+  url: string;
+  isMain: boolean;
+}
+
+// Interface dla istniejących zdjęć
+interface ToolImage {
+  id: number;
+  url: string;
+  filename: string;
+  contentType: string;
+  isMain: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 @Component({
   selector: 'app-edit-tool',
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
@@ -49,13 +67,15 @@ interface GoogleGeocodeResult {
   styleUrl: './edit-tool.component.css'
 })
 export class EditToolComponent {
-   @ViewChild('mapContainer') mapContainer!: ElementRef;
+  @ViewChild('mapContainer') mapContainer!: ElementRef;
   @ViewChild('addressInput') addressInput!: ElementRef;
+  @ViewChild('fileInput') fileInput!: ElementRef;
 
   toolForm: FormGroup;
   isSubmitting: boolean = false;
   isLoadingLocation: boolean = false;
   isLoadingTool: boolean = false;
+  isLoadingImages: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
   toolId: number = 0;
@@ -63,6 +83,14 @@ export class EditToolComponent {
 
   // Kategorie zgodne z backendem
   categories = Object.values(Category);
+
+  // Zmienne dla zdjęć
+  existingImages: ToolImage[] = [];
+  selectedNewImages: ImagePreview[] = [];
+  maxImages: number = 10;
+  maxFileSize: number = 5 * 1024 * 1024; // 5MB
+  allowedFileTypes: string[] = ['image/jpeg', 'image/png', 'image/webp'];
+  isDragOver: boolean = false;
 
   private googleMapsApiKey = environment.googleMapsApiKey;
   // Zmienne mapy
@@ -96,6 +124,7 @@ export class EditToolComponent {
       this.toolId = +params['id'];
       if (this.toolId) {
         this.loadToolData();
+        this.loadToolImages();
       } else {
         this.errorMessage = 'Nieprawidłowy identyfikator narzędzia';
       }
@@ -139,6 +168,20 @@ export class EditToolComponent {
     });
   }
 
+  private loadToolImages(): void {
+    this.isLoadingImages = true;
+    this.toolService.getToolImages(this.toolId).subscribe({
+      next: (response) => {
+        this.existingImages = response.data.images || [];
+        this.isLoadingImages = false;
+      },
+      error: (error) => {
+        console.error('Błąd podczas ładowania zdjęć:', error);
+        this.isLoadingImages = false;
+      }
+    });
+  }
+
   private populateForm(): void {
     if (this.currentTool) {
       this.toolForm.patchValue({
@@ -158,6 +201,185 @@ export class EditToolComponent {
       }
     }
   }
+
+  // ========== METODY DO OBSŁUGI ZDJĘĆ ==========
+
+  onFileSelect(event: any): void {
+    const files = event.target.files;
+    this.handleFiles(files);
+    // Resetuj input aby można było wybrać te same pliki ponownie
+    event.target.value = '';
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+
+    const files = event.dataTransfer?.files;
+    if (files) {
+      this.handleFiles(files);
+    }
+  }
+
+  private handleFiles(files: FileList): void {
+    const totalImages = this.existingImages.length + this.selectedNewImages.length;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      if (!this.validateFile(file)) {
+        continue;
+      }
+
+      if (totalImages + i >= this.maxImages) {
+        this.errorMessage = `Możesz mieć maksymalnie ${this.maxImages} zdjęć.`;
+        break;
+      }
+
+      // Sprawdź czy plik już nie został dodany
+      if (this.selectedNewImages.some(img =>
+          img.file.name === file.name &&
+          img.file.size === file.size &&
+          img.file.lastModified === file.lastModified)) {
+        continue;
+      }
+
+      // Utwórz URL do podglądu
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imagePreview: ImagePreview = {
+          file: file,
+          url: e.target?.result as string,
+          isMain: false // Nowe zdjęcia domyślnie nie są główne
+        };
+        this.selectedNewImages.push(imagePreview);
+        this.errorMessage = '';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  private validateFile(file: File): boolean {
+    // Sprawdź typ pliku
+    if (!this.allowedFileTypes.includes(file.type)) {
+      this.errorMessage = 'Dozwolone są tylko pliki JPG, PNG i WebP.';
+      return false;
+    }
+
+    // Sprawdź rozmiar pliku
+    if (file.size > this.maxFileSize) {
+      this.errorMessage = 'Plik jest za duży. Maksymalny rozmiar to 5MB.';
+      return false;
+    }
+
+    return true;
+  }
+
+  removeNewImage(index: number): void {
+    this.selectedNewImages.splice(index, 1);
+    this.errorMessage = '';
+  }
+
+  removeExistingImage(image: ToolImage): void {
+    if (confirm('Czy na pewno chcesz usunąć to zdjęcie? Ta operacja jest nieodwracalna.')) {
+      this.toolService.deleteToolImage(this.toolId, image.id).subscribe({
+        next: () => {
+          this.existingImages = this.existingImages.filter(img => img.id !== image.id);
+          this.successMessage = 'Zdjęcie zostało usunięte';
+          // setTimeout(() => this.successMessage = '', 3000);
+        },
+        error: (error) => {
+          this.errorMessage = 'Nie udało się usunąć zdjęcia';
+          console.error('Błąd podczas usuwania zdjęcia:', error);
+        }
+      });
+    }
+  }
+
+  setExistingImageAsMain(image: ToolImage): void {
+    if (image.isMain) return;
+
+    this.toolService.setMainImage(this.toolId, image.id).subscribe({
+      next: () => {
+        // Zaktualizuj stan lokalnie
+        this.existingImages.forEach(img => img.isMain = false);
+        image.isMain = true;
+        this.successMessage = 'Zdjęcie główne zostało zmienione';
+        // setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (error) => {
+        this.errorMessage = 'Nie udało się zmienić zdjęcia głównego';
+        console.error('Błąd podczas zmiany zdjęcia głównego:', error);
+      }
+    });
+  }
+
+  setNewImageAsMain(index: number): void {
+    this.selectedNewImages.forEach(img => img.isMain = false);
+    this.selectedNewImages[index].isMain = true;
+  }
+
+  triggerFileInput(): void {
+    this.fileInput.nativeElement.click();
+  }
+
+  private uploadNewImages(): void {
+    if (this.selectedNewImages.length === 0) {
+      this.onToolUpdated();
+      return;
+    }
+
+    // Sprawdź czy któreś z nowych zdjęć ma być główne
+    const hasMainImage = this.selectedNewImages.some(img => img.isMain);
+    const hasExistingMainImage = this.existingImages.some(img => img.isMain);
+
+    // Jeśli żadne nowe zdjęcie nie jest główne i nie ma istniejącego głównego
+    if (!hasMainImage && !hasExistingMainImage && this.selectedNewImages.length > 0) {
+      this.selectedNewImages[0].isMain = true;
+    }
+
+    // Wysyłaj zdjęcia sekwencyjnie
+    this.uploadImageSequentially(0);
+  }
+
+  private uploadImageSequentially(index: number): void {
+    if (index >= this.selectedNewImages.length) {
+      this.onToolUpdated();
+      return;
+    }
+
+    const imagePreview = this.selectedNewImages[index];
+    const formData = new FormData();
+    formData.append('file', imagePreview.file);
+    formData.append('isMain', imagePreview.isMain.toString());
+
+    this.toolService.uploadToolImage(this.toolId, formData).subscribe({
+      next: (response) => {
+        // Przejdź do następnego zdjęcia
+        this.uploadImageSequentially(index + 1);
+      },
+      error: (error) => {
+        console.error(`Error uploading image ${index + 1}:`, error);
+        // Mimo błędu, przejdź do następnego zdjęcia
+        this.uploadImageSequentially(index + 1);
+      }
+    });
+  }
+
+  // ========== POZOSTAŁE METODY (bez zmian) ==========
 
   private updateMapWithToolLocation(): void {
     if (this.currentTool && this.map && this.marker) {
@@ -452,13 +674,8 @@ export class EditToolComponent {
 
     this.toolService.updateTool(this.toolId, formData).subscribe({
       next: (response) => {
-        this.isSubmitting = false;
-        this.successMessage = 'Narzędzie zostało pomyślnie zaktualizowane!';
-
-        // Przekieruj do strony szczegółów narzędzia
-        setTimeout(() => {
-          this.router.navigate(['/tool', this.toolId]);
-        }, 1500);
+        // Po zaktualizowaniu danych narzędzia, prześlij nowe zdjęcia
+        this.uploadNewImages();
       },
       error: (error) => {
         this.isSubmitting = false;
@@ -468,43 +685,54 @@ export class EditToolComponent {
     });
   }
 
-  onToggleStatus(): void {
-  const action = this.currentTool?.isActive ? 'dezaktywować' : 'aktywować';
-  const actionUpper = this.currentTool?.isActive ? 'Dezaktywować' : 'Aktywować';
+  private onToolUpdated(): void {
+    this.isSubmitting = false;
+    this.successMessage = 'Narzędzie zostało pomyślnie zaktualizowane!';
 
-  const confirmMessage = this.currentTool?.isActive
-    ? 'Czy na pewno chcesz dezaktywować to narzędzie? Zostanie ono ukryte w wynikach wyszukiwania, ale istniejące rezerwacje pozostaną aktywne.'
-    : 'Czy na pewno chcesz aktywować to narzędzie? Stanie się ono ponownie widoczne w wynikach wyszukiwania.';
-
-  if (confirm(confirmMessage)) {
-    this.isSubmitting = true;
-    this.errorMessage = '';
-
-    const operation = this.currentTool?.isActive
-      ? this.toolService.deactivateTool(this.toolId)
-      : this.toolService.activateTool(this.toolId);
-
-    operation.subscribe({
-      next: (response) => {
-        this.isSubmitting = false;
-        this.successMessage = `Narzędzie zostało pomyślnie ${this.currentTool?.isActive ? 'dezaktywowane' : 'aktywowane'}!`;
-
-        // Zaktualizuj dane narzędzia
-        this.currentTool = response;
-
-        // Opcjonalnie: przekieruj do listy narzędzi po pewnym czasie
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      },
-      error: (error) => {
-        this.isSubmitting = false;
-        this.errorMessage = error.error?.message || `Wystąpił błąd podczas ${action}owania narzędzia. Spróbuj ponownie.`;
-        console.error(`Błąd podczas ${action}owania narzędzia:`, error);
-      }
-    });
+    // Przekieruj do strony szczegółów narzędzia
+    setTimeout(() => {
+      this.router.navigate(['/tool', this.toolId]);
+    }, 2000);
   }
-}
+
+  onToggleStatus(): void {
+    const action = this.currentTool?.isActive ? 'dezaktywować' : 'aktywować';
+    const actionUpper = this.currentTool?.isActive ? 'Dezaktywować' : 'Aktywować';
+
+    const confirmMessage = this.currentTool?.isActive
+      ? 'Czy na pewno chcesz dezaktywować to narzędzie? Zostanie ono ukryte w wynikach wyszukiwania, ale istniejące rezerwacje pozostaną aktywne.'
+      : 'Czy na pewno chcesz aktywować to narzędzie? Stanie się ono ponownie widoczne w wynikach wyszukiwania.';
+
+    if (confirm(confirmMessage)) {
+      this.isSubmitting = true;
+      this.errorMessage = '';
+
+      const operation = this.currentTool?.isActive
+        ? this.toolService.deactivateTool(this.toolId)
+        : this.toolService.activateTool(this.toolId);
+
+      operation.subscribe({
+        next: (response) => {
+          this.isSubmitting = false;
+          this.successMessage = `Narzędzie zostało pomyślnie ${this.currentTool?.isActive ? 'dezaktywowane' : 'aktywowane'}!`;
+
+          // Zaktualizuj dane narzędzia
+          this.currentTool = response;
+          
+
+          // Opcjonalnie: przekieruj do listy narzędzi po pewnym czasie
+          setTimeout(() => {
+            window.location.reload();
+          }, 100);
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          this.errorMessage = error.error?.message || `Wystąpił błąd podczas ${action}owania narzędzia. Spróbuj ponownie.`;
+          console.error(`Błąd podczas ${action}owania narzędzia:`, error);
+        }
+      });
+    }
+  }
 
   // Pomocnicza metoda do oznaczania wszystkich pól jako dotknięte (dla walidacji)
   markFormGroupTouched(formGroup: FormGroup) {
@@ -530,5 +758,4 @@ export class EditToolComponent {
       .toLowerCase()
       .replace(/\b\w/g, char => char.toUpperCase());
   }
-
 }

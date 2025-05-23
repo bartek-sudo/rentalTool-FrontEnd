@@ -59,6 +59,14 @@ export class ToolService {
     return this.http.post(`${this.apiUrl}/${toolId}/images`, formData);
   }
 
+  deleteToolImage(toolId: number, imageId: number): Observable<any> {
+  return this.http.delete<any>(`${this.apiUrl}/${toolId}/images/${imageId}`);
+}
+
+setMainImage(toolId: number, imageId: number): Observable<any> {
+  return this.http.put<any>(`${this.apiUrl}/${toolId}/images/${imageId}/main`, {});
+}
+
   getToolAvailability(toolId: number, startDate: string, endDate: string): Observable<DailyAvailability[]> {
     return this.http.get<DailyAvailability[]>(
       `${this.apiUrl}/${toolId}/availability?startDate=${startDate}&endDate=${endDate}`

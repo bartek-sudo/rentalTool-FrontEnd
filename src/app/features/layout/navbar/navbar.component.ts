@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { initDropdowns, initFlowbite } from 'flowbite';
 import { AuthService } from '../../../core/services/auth.service';
+import { TokenService } from '../../../core/services/token.service';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { ToolService } from '../../tool/services/tool.service';
 
@@ -22,6 +23,7 @@ export class NavbarComponent implements OnInit, AfterViewChecked {
   showMobileSearch = false;
 
   protected authService = inject(AuthService);
+  protected tokenService = inject(TokenService);
   protected toolService = inject(ToolService);
   protected router = inject(Router);
 
@@ -66,6 +68,12 @@ export class NavbarComponent implements OnInit, AfterViewChecked {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  // Sprawdź czy użytkownik ma rolę admin
+  isAdmin(): boolean {
+    const roles = this.tokenService.getRoles();
+    return roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
   }
 
   // Obsługa wpisywania w pasku wyszukiwania

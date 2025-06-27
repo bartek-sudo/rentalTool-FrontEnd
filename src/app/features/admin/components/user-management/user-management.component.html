@@ -1,0 +1,145 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Zarządzanie użytkownikami</h1>
+    <form (ngSubmit)="onSearch()" class="flex gap-2">
+      <input type="text" [(ngModel)]="searchTerm" name="search" placeholder="Szukaj użytkownika..."
+        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+      <button type="submit"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Szukaj</button>
+    </form>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead>
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Imię i nazwisko</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rola</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Utworzony</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of users" class="border-b border-gray-100 dark:border-gray-700">
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{user.id}}</td>
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{user.firstName}} {{user.lastName}}</td>
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{user.email}}</td>
+          <td class="px-4 py-2">
+            <span [ngClass]="getUserStatusColor(user)" class="px-2 py-1 rounded text-xs font-semibold">
+              {{getUserStatus(user)}}
+            </span>
+          </td>
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{getUserRole(user)}}</td>
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{formatDate(user.createdAt)}}</td>
+          <td class="px-4 py-2 flex flex-wrap gap-2">
+            <button (click)="showUserDetailsModal(user)"
+              class="px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 text-xs">Szczegóły</button>
+            <button *ngIf="!user.blocked" (click)="blockUser(user)"
+              class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">Zablokuj</button>
+            <button *ngIf="user.blocked" (click)="unblockUser(user)"
+              class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs">Odblokuj</button>
+            <button (click)="showRoleChangeModal(user)"
+              class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Zmień rolę</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Paginacja -->
+    <div *ngIf="totalPages > 1" class="mt-6 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+      <div class="flex flex-1 justify-between sm:hidden">
+        <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 0"
+          class="relative inline-flex items-center rounded-md border border-gray-300 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50">
+          Poprzednia
+        </button>
+        <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages - 1"
+          class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50">
+          Następna
+        </button>
+      </div>
+      <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            Pokazano <span class="font-medium">{{(currentPage * pageSize) + 1}}</span> do <span
+              class="font-medium">{{Math.min((currentPage + 1) * pageSize, totalItems)}}</span> z <span
+              class="font-medium">{{totalItems}}</span> użytkowników
+          </p>
+        </div>
+        <div>
+          <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+            <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 0"
+              class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 dark:text-gray-500 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
+              <span class="sr-only">Poprzednia</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button *ngFor="let page of getPageNumbers()" (click)="changePage(page)"
+              [ngClass]="{'bg-blue-600 text-white': page === currentPage, 'text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700': page !== currentPage}"
+              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0">
+              {{page + 1}}
+            </button>
+            <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages - 1"
+              class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 dark:text-gray-500 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
+              <span class="sr-only">Następna</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal szczegółów użytkownika -->
+  <div *ngIf="showUserDetails" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md relative">
+      <button (click)="closeModals()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">&times;</button>
+      <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Szczegóły użytkownika</h2>
+      <div *ngIf="selectedUser" class="text-gray-900 dark:text-white">
+        <p><span class="font-semibold">ID:</span> {{selectedUser.id}}</p>
+        <p><span class="font-semibold">Imię i nazwisko:</span> {{selectedUser.firstName}} {{selectedUser.lastName}}</p>
+        <p><span class="font-semibold">Email:</span> {{selectedUser.email}}</p>
+        <p><span class="font-semibold">Status:</span> {{getUserStatus(selectedUser)}}</p>
+        <p><span class="font-semibold">Rola:</span> {{getUserRole(selectedUser)}}</p>
+        <p><span class="font-semibold">Utworzony:</span> {{formatDate(selectedUser.createdAt)}}</p>
+        <p><span class="font-semibold">Zaktualizowany:</span> {{formatDate(selectedUser.updatedAt)}}</p>
+        <p><span class="font-semibold">Zweryfikowany:</span> {{selectedUser.verified ? 'Tak' : 'Nie'}}</p>
+        <p><span class="font-semibold">Zablokowany:</span> {{selectedUser.blocked ? 'Tak' : 'Nie'}}</p>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <button (click)="closeModals()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Zamknij</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal zmiany roli -->
+  <div *ngIf="showRoleModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md relative">
+      <button (click)="closeModals()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">&times;</button>
+      <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Zmień rolę użytkownika</h2>
+      <div *ngIf="selectedUser" class="text-gray-900 dark:text-white">
+        <p class="mb-2"><span class="font-semibold">Użytkownik:</span> {{selectedUser.firstName}} {{selectedUser.lastName}}</p>
+        <label for="role" class="block mb-2 font-medium">Rola:</label>
+        <select id="role" [(ngModel)]="newRole" name="role"
+          class="w-full p-2 border border-gray-300 rounded dark:bg-gray-700 dark:text-white dark:border-gray-600">
+          <option value="USER">Użytkownik</option>
+          <option value="ADMIN">Administrator</option>
+          <option value="MODERATOR">Moderator</option>
+        </select>
+      </div>
+      <div class="mt-6 flex justify-end gap-2">
+        <button (click)="closeModals()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600">Anuluj</button>
+        <button (click)="changeUserRole()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Zmień rolę</button>
+      </div>
+    </div>
+  </div>
+</div>

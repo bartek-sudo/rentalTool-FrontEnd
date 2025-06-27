@@ -1,4 +1,7 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -11,8 +14,8 @@ export const routes: Routes = [
   },
   {
     path: 'change-password',
-    loadComponent: () => import('./features/auth/components/change-password/change-password.component').then(m => m.ChangePasswordComponent)
-    //TODO: Add canActivate: [AuthGuard] to protect this route
+    loadComponent: () => import('./features/auth/components/change-password/change-password.component').then(m => m.ChangePasswordComponent),
+    canActivate: [authGuard]
   },
   {
     path: '',
@@ -29,22 +32,55 @@ export const routes: Routes = [
   },
   {
     path: 'my-tools',
-    loadComponent: () => import('./features/tool/components/my-tools/my-tools.component').then(m => m.MyToolsComponent)
+    loadComponent: () => import('./features/tool/components/my-tools/my-tools.component').then(m => m.MyToolsComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'create-tool',
-    loadComponent: () => import('./features/tool/components/create-tool/create-tool.component').then(m => m.CreateToolComponent)
+    loadComponent: () => import('./features/tool/components/create-tool/create-tool.component').then(m => m.CreateToolComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'edit-tool/:id',
-    loadComponent: () => import('./features/tool/components/edit-tool/edit-tool.component').then(m => m.EditToolComponent)
+    loadComponent: () => import('./features/tool/components/edit-tool/edit-tool.component').then(m => m.EditToolComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'my-rentals',
-    loadComponent: () => import('./features/reservation/components/my-rentals/my-rentals.component').then(m => m.MyRentalsComponent)
+    loadComponent: () => import('./features/reservation/components/my-rentals/my-rentals.component').then(m => m.MyRentalsComponent),
+    canActivate: [authGuard]
   },
   {
     path: 'my-tool-reservations',
-    loadComponent: () => import('./features/reservation/components/my-tool-reservations/my-tool-reservations.component').then(m => m.MyToolReservationsComponent)
+    loadComponent: () => import('./features/reservation/components/my-tool-reservations/my-tool-reservations.component').then(m => m.MyToolReservationsComponent),
+    canActivate: [authGuard]
+  },
+  // Admin routes
+  {
+    path: 'admin',
+    canActivate: [adminGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/admin/components/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./features/admin/components/user-management/user-management.component').then(m => m.UserManagementComponent)
+      },
+      {
+        path: 'tools',
+        loadComponent: () => import('./features/admin/components/tool-management/tool-management.component').then(m => m.ToolManagementComponent)
+      },
+      {
+        path: 'reservations',
+        loadComponent: () => import('./features/admin/components/reservation-management/reservation-management.component').then(m => m.ReservationManagementComponent)
+      }
+    ]
   }
 ];

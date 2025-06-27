@@ -59,7 +59,9 @@ export class MyRentalsComponent {
               if (rental.tool && rental.tool.ownerId) {
                 this.userService.getUserById(rental.tool.ownerId).subscribe({
                   next: (ownerResponse) => {
-                    rental.owner = ownerResponse.data.user;
+                    if (ownerResponse.data?.user) {
+                      rental.owner = ownerResponse.data.user;
+                    }
                   },
                   error: (error) => {
                     console.error(`Nie udało się pobrać informacji o właścicielu ID: ${rental.tool?.ownerId}`, error);
@@ -189,9 +191,24 @@ cancelReservation(reservationId: number): void {
 }
 
   // Helper do formatowania daty
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL');
+  formatDate(dateString: string | null | undefined): string {
+    if (!dateString) {
+      return 'Brak daty';
+    }
+
+    try {
+      const date = new Date(dateString);
+
+      // Sprawdź czy data jest poprawna
+      if (isNaN(date.getTime())) {
+        return 'Nieprawidłowa data';
+      }
+
+      return date.toLocaleDateString('pl-PL');
+    } catch (error) {
+      console.error('Błąd formatowania daty:', error, 'dla daty:', dateString);
+      return 'Błąd daty';
+    }
   }
 
   // Helper do tłumaczenia statusu

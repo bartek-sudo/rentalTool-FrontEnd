@@ -81,23 +81,28 @@
             </div>
 
             <!-- Informacje o właścicielu -->
-            <div>
+            <div *ngIf="tool?.owner">
               <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Właściciel</h2>
               <div class="flex items-center">
                 <!-- Avatar właściciela -->
-                <div class="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full mr-4 overflow-hidden">
-                  <!-- <img *ngIf="tool?.owner?.avatarUrl" [src]="tool?.owner?.avatarUrl" class="w-full h-full object-cover" alt="Avatar"> -->
-                  <!-- <div *ngIf="!tool?.owner?.avatarUrl" class="w-full h-full flex items-center justify-center bg-blue-100 dark:bg-blue-900 text-blue-500 dark:text-blue-300">
-                    <span>{{ getInitials(tool?.owner?.firstName, tool?.owner?.lastName) }}</span>
-                  </div> -->
+                <div class="w-12 h-12 bg-gray-300 dark:bg-gray-600 rounded-full mr-4 overflow-hidden flex items-center justify-center">
+                  <span class="text-gray-600 dark:text-gray-300 font-medium text-sm">
+                    {{ getInitials(tool?.owner?.firstName, tool?.owner?.lastName) }}
+                  </span>
                 </div>
 
                 <!-- Dane właściciela -->
                 <div>
                   <h3 class="font-medium text-gray-900 dark:text-white">{{ tool?.owner?.firstName }} {{ tool?.owner?.lastName }}</h3>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Członek od: {{ tool?.owner?.created_at | date }}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Członek od: {{ formatDate(tool?.owner?.createdAt) }}</p>
                 </div>
               </div>
+            </div>
+
+            <!-- Informacja o braku danych właściciela -->
+            <div *ngIf="!tool?.owner && !isLoading" class="mt-6">
+              <h2 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Właściciel</h2>
+              <p class="text-gray-500 dark:text-gray-400">Informacje o właścicielu niedostępne</p>
             </div>
           </div>
         </div>

@@ -718,7 +718,7 @@ export class EditToolComponent {
 
           // Zaktualizuj dane narzędzia
           this.currentTool = response;
-          
+
 
           // Opcjonalnie: przekieruj do listy narzędzi po pewnym czasie
           setTimeout(() => {

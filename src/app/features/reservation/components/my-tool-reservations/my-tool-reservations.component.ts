@@ -63,7 +63,9 @@ export class MyToolReservationsComponent {
           // Pobierz dane najemcy
           this.userService.getUserById(reservation.renterId).subscribe({
             next: (renterResponse) => {
-              reservation.renter = renterResponse.data.user;
+              if (renterResponse.data?.user) {
+                reservation.renter = renterResponse.data.user;
+              }
             },
             error: (error) => {
               console.error(`Nie udało się pobrać informacji o najemcy ID: ${reservation.renterId}`, error);
@@ -124,9 +126,24 @@ confirmReservation(reservationId: number): void {
 }
 
   // Helper do formatowania daty
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pl-PL');
+  formatDate(dateString: string | null | undefined): string {
+    if (!dateString) {
+      return 'Brak daty';
+    }
+
+    try {
+      const date = new Date(dateString);
+
+      // Sprawdź czy data jest poprawna
+      if (isNaN(date.getTime())) {
+        return 'Nieprawidłowa data';
+      }
+
+      return date.toLocaleDateString('pl-PL');
+    } catch (error) {
+      console.error('Błąd formatowania daty:', error, 'dla daty:', dateString);
+      return 'Błąd daty';
+    }
   }
 
   // Helper do tłumaczenia statusu

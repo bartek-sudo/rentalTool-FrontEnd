@@ -266,6 +266,7 @@
         <div
           class="hidden z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600"
           id="dropdown">
+          <!-- Sekcja 1: Informacje o użytkowniku -->
           <div class="py-3 px-4">
             <span
               class="block text-sm font-semibold text-gray-900 dark:text-white">{{authService.currentUser()?.firstName}}
@@ -273,6 +274,8 @@
             <span
               class="block text-sm text-gray-500 truncate dark:text-gray-400">{{authService.currentUser()?.email}}</span>
           </div>
+
+          <!-- Sekcja 2: Moje narzędzia, wypożyczenia, rezerwacje -->
           <ul class="py-1 text-gray-500 dark:text-gray-400" aria-labelledby="dropdown">
             <li>
               <a routerLink="/my-tools"
@@ -292,6 +295,22 @@
                 Moje rezerwacje
               </a>
             </li>
+          </ul>
+
+          <!-- Sekcja 3: Panel admin -->
+          @if (isAdmin()) {
+          <ul class="py-1 text-gray-500 dark:text-gray-400" aria-labelledby="dropdown">
+            <li>
+              <a routerLink="/admin"
+                class="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-400 dark:hover:text-white">
+                Panel Administratora
+              </a>
+            </li>
+          </ul>
+          }
+
+          <!-- Sekcja 4: Profile i settings -->
+          <ul class="py-1 text-gray-500 dark:text-gray-400" aria-labelledby="dropdown">
             <li>
               <a href="#"
                 class="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-400 dark:hover:text-white">My
@@ -303,24 +322,12 @@
                 settings</a>
             </li>
           </ul>
-          <ul class="py-1 text-gray-500 dark:text-gray-400" aria-labelledby="dropdown">
-            <li>
-              <a href="#"
-                class="flex items-center py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                <svg class="mr-2 w-4 h-4 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                  fill="currentColor" viewBox="0 0 20 18">
-                  <path
-                    d="M17.947 2.053a5.209 5.209 0 0 0-3.793-1.53A6.414 6.414 0 0 0 10 2.311 6.482 6.482 0 0 0 5.824.5a5.2 5.2 0 0 0-3.8 1.521c-1.915 1.916-2.315 5.392.625 8.333l7 7a.5.5 0 0 0 .708 0l7-7a6.6 6.6 0 0 0 2.123-4.508 5.179 5.179 0 0 0-1.533-3.793Z" />
-                </svg>
-                My likes
-              </a>
-            </li>
-            <!-- Additional user menu items... -->
-          </ul>
+
+          <!-- Sekcja 5: Sign out -->
           <ul class="py-1 text-gray-500 dark:text-gray-400" aria-labelledby="dropdown">
             <li>
               <button (click)="logout()"
-                class="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sign
+                class="block w-full text-left py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sign
                 out</button>
             </li>
           </ul>

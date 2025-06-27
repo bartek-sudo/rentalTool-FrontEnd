@@ -12,8 +12,8 @@ export interface Reservation {
   tool?: Tool; // Szczegóły narzędzia, jeśli są dostępne
   renter?: User; // Szczegóły najemcy, jeśli są dostępne
   owner?: User; // Szczegóły najemcy, jeśli są dostępne
-  created_at?: string;
-  updated_at?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export enum ReservationStatus {

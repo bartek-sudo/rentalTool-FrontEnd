@@ -289,7 +289,14 @@ export class ToolAvailabilityComponent implements OnInit {
         },
         error: (error) => {
           console.error('Błąd podczas tworzenia rezerwacji:', error);
-          this.errorMessage = 'Nie udało się utworzyć rezerwacji. Spróbuj ponownie.';
+
+          // Sprawdź czy to błąd "You cannot reserve your own tool"
+          if (error.error?.message === 'You cannot reserve your own tool') {
+            this.errorMessage = 'Nie możesz zarezerwować swojego własnego narzędzia.';
+          } else {
+            this.errorMessage = 'Nie udało się utworzyć rezerwacji. Spróbuj ponownie.';
+          }
+
           this.isLoading = false;
         }
       });

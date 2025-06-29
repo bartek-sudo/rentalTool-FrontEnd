@@ -1,19 +1,153 @@
 <div class="container mx-auto px-4 py-8">
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Zarządzanie narzędziami</h1>
+  <!-- Komunikaty -->
+  <div *ngIf="showSuccessMessage" class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
+    {{ successMessage }}
   </div>
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-    <p class="text-gray-600 dark:text-gray-300 mb-4">Panel zarządzania narzędziami - w trakcie implementacji</p>
-    <div class="mb-4">
-      <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Funkcjonalności do implementacji:</h3>
-      <ul class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-        <li>Lista wszystkich narzędzi</li>
-        <li>Zatwierdzanie nowych narzędzi</li>
-        <li>Usuwanie narzędzi</li>
-        <li>Podgląd szczegółów narzędzia</li>
-        <li>Filtrowanie i wyszukiwanie</li>
-        <li>Zarządzanie kategoriami</li>
-      </ul>
+  <div *ngIf="showErrorMessage" class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+    {{ errorMessage }}
+  </div>
+
+  <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ getPageTitle() }}</h1>
+  </div>
+
+  <!-- Filtry statusu -->
+  <div class="mb-6">
+    <div class="flex flex-wrap gap-2">
+      <button *ngFor="let filter of statusFilters"
+        (click)="setStatusFilter(filter.value)"
+        [ngClass]="{'bg-blue-600 text-white': activeStatusFilter === filter.value, 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300': activeStatusFilter !== filter.value}"
+        class="px-3 py-1 rounded-lg text-sm font-medium hover:bg-blue-600 hover:text-white transition-colors">
+        {{ filter.label }}
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead>
+        <tr>
+          <!-- <th class="px-4 py-2">Właściciel</th> -->
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Nazwa</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Kategoria</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Status</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Utworzone</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let tool of filterTools()" class="border-b border-gray-100 dark:border-gray-700">
+          <!-- <td class="px-4 py-2">{{ tool.owner?.username }}</td> -->
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{ tool.name }}</td>
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{ tool.category }}</td>
+          <td class="px-4 py-2">
+            <span [ngClass]="getStatusColor(tool.moderationStatus)" class="px-2 py-1 rounded text-xs font-semibold">
+              {{ getStatusLabel(tool.moderationStatus) }}
+            </span>
+            <div *ngIf="tool.moderationStatus === 'REJECTED' && tool.moderationComment" class="mt-1 text-xs text-red-600 dark:text-red-400">
+              Komentarz: {{ tool.moderationComment }}
+            </div>
+          </td>
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{ formatDate(tool.createdAt) }}</td>
+          <td class="px-4 py-2 flex flex-wrap gap-2">
+            <button (click)="showToolDetailsModal(tool)"
+              class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Zobacz</button>
+            <button *ngIf="tool.moderationStatus === 'PENDING' || tool.moderationStatus === 'REJECTED'" (click)="approveTool(tool)"
+              class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs">Zatwierdź</button>
+            <button *ngIf="tool.moderationStatus === 'PENDING' || tool.moderationStatus === 'APPROVED'" (click)="rejectTool(tool)"
+              class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">Odrzuć</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Paginacja -->
+    <div *ngIf="totalPages > 1" class="mt-6 flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+      <div class="flex flex-1 justify-between sm:hidden">
+        <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 0"
+          class="relative inline-flex items-center rounded-md border border-gray-300 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50">
+          Poprzednia
+        </button>
+        <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages - 1"
+          class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50">
+          Następna
+        </button>
+      </div>
+      <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            Pokazano <span class="font-medium">{{(currentPage * pageSize) + 1}}</span> do <span
+              class="font-medium">{{Math.min((currentPage + 1) * pageSize, totalItems)}}</span> z <span
+              class="font-medium">{{totalItems}}</span> narzędzi
+          </p>
+        </div>
+        <div>
+          <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+            <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 0"
+              class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 dark:text-gray-500 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
+              <span class="sr-only">Poprzednia</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button *ngFor="let page of getPageNumbers()" (click)="changePage(page)"
+              [ngClass]="{'bg-blue-600 text-white': page === currentPage, 'text-gray-900 dark:text-white ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700': page !== currentPage}"
+              class="relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus:outline-offset-0">
+              {{page + 1}}
+            </button>
+            <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages - 1"
+              class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 dark:text-gray-500 ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-20 focus:outline-offset-0 disabled:opacity-50">
+              <span class="sr-only">Następna</span>
+              <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd"
+                  d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal moderacji -->
+  <div *ngIf="showModerationModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md relative">
+      <button (click)="closeModals()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">&times;</button>
+      <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+        {{ moderationAction === 'approve' ? 'Zatwierdź' : 'Odrzuć' }} narzędzie
+      </h2>
+      <div *ngIf="selectedTool" class="text-gray-900 dark:text-white">
+        <p class="mb-4">Narzędzie: <strong>"{{selectedTool.name}}"</strong></p>
+        <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+          Aktualny status: <span [ngClass]="getStatusColor(selectedTool.moderationStatus)" class="px-2 py-1 rounded text-xs font-semibold">
+            {{ getStatusLabel(selectedTool.moderationStatus) }}
+          </span>
+        </p>
+        <label *ngIf="moderationAction === 'reject'" for="comment" class="block mb-2 font-medium">
+          Komentarz (wymagany):
+        </label>
+        <textarea *ngIf="moderationAction === 'reject'" id="comment" [(ngModel)]="moderationComment" name="comment" rows="3"
+          class="w-full p-2 border border-gray-300 rounded dark:bg-gray-700 dark:text-white dark:border-gray-600"
+          [class.border-red-500]="moderationAction === 'reject' && !moderationComment.trim()"
+          placeholder="Dodaj komentarz do odrzucenia..."></textarea>
+        <p *ngIf="moderationAction === 'reject' && !moderationComment.trim()" class="text-red-500 text-sm mt-1">
+          Komentarz jest wymagany przy odrzucaniu narzędzia
+        </p>
+      </div>
+      <div class="mt-6 flex justify-end gap-2">
+        <button (click)="closeModals()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600">Anuluj</button>
+        <button (click)="submitModeration(moderationAction)"
+          [ngClass]="moderationAction === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'"
+          [disabled]="moderationAction === 'reject' && !moderationComment.trim()"
+          [class.opacity-50]="moderationAction === 'reject' && !moderationComment.trim()"
+          [class.cursor-not-allowed]="moderationAction === 'reject' && !moderationComment.trim()"
+          class="px-4 py-2 text-white rounded">
+          {{ moderationAction === 'approve' ? 'Zatwierdź' : 'Odrzuć' }}
+        </button>
+      </div>
     </div>
   </div>
 </div>

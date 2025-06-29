@@ -10,4 +10,5 @@ export interface User {
   blockedAt: string;
   verifiedAt: string;
   userType?: string;
+  role?: string;
 }

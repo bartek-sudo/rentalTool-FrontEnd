@@ -16,4 +16,6 @@ export interface Tool {
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
+  moderationStatus?: string;
+  moderationComment?: string;
 }

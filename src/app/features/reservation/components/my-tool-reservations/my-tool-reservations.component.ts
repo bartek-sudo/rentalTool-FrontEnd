@@ -94,36 +94,67 @@ export class MyToolReservationsComponent {
     this.activeStatusFilter = status;
   }
 
-confirmReservation(reservationId: number): void {
-  this.isLoading = true;
+  confirmReservation(reservationId: number): void {
+    this.isLoading = true;
 
-  this.reservationService.confirmReservation(reservationId).subscribe({
-    next: (response) => {
-      // Znajdź indeks rezerwacji w tablicy
-      const index = this.reservations.findIndex(r => r.id === reservationId);
+    this.reservationService.confirmReservation(reservationId).subscribe({
+      next: (response) => {
+        // Znajdź indeks rezerwacji w tablicy
+        const index = this.reservations.findIndex(r => r.id === reservationId);
 
-      if (index !== -1) {
-        // Zachowaj referencje do tool i renter przed aktualizacją
-        const toolRef = this.reservations[index].tool;
-        const renterRef = this.reservations[index].renter;
+        if (index !== -1) {
+          // Zachowaj referencje do tool i renter przed aktualizacją
+          const toolRef = this.reservations[index].tool;
+          const renterRef = this.reservations[index].renter;
 
-        // Aktualizuj rezerwację z odpowiedzi API
-        this.reservations[index] = response.data.reservation;
+          // Aktualizuj rezerwację z odpowiedzi API
+          this.reservations[index] = response.data.reservation;
 
-        // Przywróć zachowane referencje
-        this.reservations[index].tool = toolRef;
-        this.reservations[index].renter = renterRef;
+          // Przywróć zachowane referencje
+          this.reservations[index].tool = toolRef;
+          this.reservations[index].renter = renterRef;
+        }
+
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Błąd podczas potwierdzania rezerwacji:', error);
+        this.errorMessage = 'Nie udało się potwierdzić rezerwacji. Spróbuj ponownie.';
+        this.isLoading = false;
       }
+    });
+  }
 
-      this.isLoading = false;
-    },
-    error: (error) => {
-      console.error('Błąd podczas potwierdzania rezerwacji:', error);
-      this.errorMessage = 'Nie udało się potwierdzić rezerwacji. Spróbuj ponownie.';
-      this.isLoading = false;
-    }
-  });
-}
+  finishReservation(reservationId: number): void {
+    this.isLoading = true;
+
+    this.reservationService.finishReservation(reservationId).subscribe({
+      next: (response) => {
+        // Znajdź indeks rezerwacji w tablicy
+        const index = this.reservations.findIndex(r => r.id === reservationId);
+
+        if (index !== -1) {
+          // Zachowaj referencje do tool i renter przed aktualizacją
+          const toolRef = this.reservations[index].tool;
+          const renterRef = this.reservations[index].renter;
+
+          // Aktualizuj rezerwację z odpowiedzi API
+          this.reservations[index] = response.data.reservation;
+
+          // Przywróć zachowane referencje
+          this.reservations[index].tool = toolRef;
+          this.reservations[index].renter = renterRef;
+        }
+
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Błąd podczas kończenia rezerwacji:', error);
+        this.errorMessage = 'Nie udało się zakończyć rezerwacji. Spróbuj ponownie.';
+        this.isLoading = false;
+      }
+    });
+  }
 
   // Helper do formatowania daty
   formatDate(dateString: string | null | undefined): string {

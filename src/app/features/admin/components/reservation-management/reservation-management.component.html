@@ -1,19 +1,97 @@
 <div class="container mx-auto px-4 py-8">
   <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Zarządzanie rezerwacjami</h1>
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ getPageTitle() }}</h1>
   </div>
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-    <p class="text-gray-600 dark:text-gray-300 mb-4">Panel zarządzania rezerwacjami - w trakcie implementacji</p>
-    <div class="mb-4">
-      <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Funkcjonalności do implementacji:</h3>
-      <ul class="list-disc pl-5 space-y-1 text-gray-700 dark:text-gray-300">
-        <li>Lista wszystkich rezerwacji</li>
-        <li>Zatwierdzanie rezerwacji</li>
-        <li>Anulowanie rezerwacji</li>
-        <li>Podgląd szczegółów rezerwacji</li>
-        <li>Filtrowanie po statusie i dacie</li>
-        <li>Raporty i statystyki</li>
-      </ul>
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+    <div *ngIf="!isLoading && reservations.length === 0" class="text-center text-gray-500 dark:text-gray-400 py-8">
+      Brak rezerwacji do wyświetlenia.
+    </div>
+    <div *ngIf="!isLoading && reservations.length > 0" class="space-y-6">
+      <div *ngFor="let reservation of reservations" class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="p-6">
+          <!-- Dane narzędzia i rezerwacji -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-4">
+            <div class="mb-4 lg:mb-0 lg:mr-6">
+              <h2 *ngIf="reservation.tool" class="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                {{ reservation.tool.name }}
+              </h2>
+              <p *ngIf="!reservation.tool" class="text-gray-600 dark:text-gray-400">
+                Ładowanie danych narzędzia...
+              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-gray-500 dark:text-gray-400 text-sm">
+                  Od {{ reservation.startDate }} do {{ reservation.endDate }}
+                </span>
+                <span [ngClass]="{
+                  'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300': reservation.status === 'PENDING',
+                  'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': reservation.status === 'CONFIRMED' || reservation.status === 'PAID' || reservation.status === 'FINISHED',
+                  'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300': reservation.status === 'CANCELED'
+                }" class="px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  {{ reservation.status }}
+                </span>
+              </div>
+            </div>
+            <div class="text-lg font-bold text-blue-600 dark:text-blue-400">
+              {{ reservation.totalPrice | currency:'PLN' }}
+            </div>
+          </div>
+
+          <!-- Informacje o właścicielu i najemcy -->
+          <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Właściciel -->
+            <div *ngIf="reservation.owner" class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 mr-3">
+                  {{ reservation.owner.firstName.charAt(0) }}{{ reservation.owner.lastName.charAt(0) }}
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">{{ reservation.owner.firstName }} {{ reservation.owner.lastName }}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Właściciel narzędzia</p>
+                </div>
+                <div class="ml-auto">
+                  <a *ngIf="reservation.owner.email" href="mailto:{{ reservation.owner.email }}" class="text-blue-600 dark:text-blue-400 text-sm hover:underline flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    Kontakt
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Najemca -->
+            <div *ngIf="reservation.renter" class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div class="flex items-center">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 dark:bg-green-900/30 dark:text-green-400 mr-3">
+                  {{ reservation.renter.firstName.charAt(0) }}{{ reservation.renter.lastName.charAt(0) }}
+                </div>
+                <div>
+                  <p class="font-medium text-gray-900 dark:text-white">{{ reservation.renter.firstName }} {{ reservation.renter.lastName }}</p>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Najemca</p>
+                </div>
+                <div class="ml-auto">
+                  <a *ngIf="reservation.renter.email" href="mailto:{{ reservation.renter.email }}" class="text-blue-600 dark:text-blue-400 text-sm hover:underline flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    Kontakt
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Przyciski akcji -->
+          <div class="mt-4 flex flex-wrap gap-2">
+            <a [routerLink]="['/tool', reservation.toolId]" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-800">
+              Zobacz narzędzie
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { moderatorGuard } from './core/guards/moderator.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
@@ -72,6 +73,30 @@ export const routes: Routes = [
       {
         path: 'users',
         loadComponent: () => import('./features/admin/components/user-management/user-management.component').then(m => m.UserManagementComponent)
+      },
+      {
+        path: 'tools',
+        loadComponent: () => import('./features/admin/components/tool-management/tool-management.component').then(m => m.ToolManagementComponent)
+      },
+      {
+        path: 'reservations',
+        loadComponent: () => import('./features/admin/components/reservation-management/reservation-management.component').then(m => m.ReservationManagementComponent)
+      }
+    ]
+  },
+  // Moderator routes - używają tych samych komponentów co admin
+  {
+    path: 'moderator',
+    canActivate: [moderatorGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/moderator/components/moderator-dashboard/moderator-dashboard.component').then(m => m.ModeratorDashboardComponent)
       },
       {
         path: 'tools',

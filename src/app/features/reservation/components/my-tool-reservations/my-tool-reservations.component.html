@@ -95,10 +95,13 @@
               Potwierdź
             </button>
 
-            <!-- Przycisk szczegóły -->
-            <a [routerLink]="['/reservations', reservation.id]" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-gray-900 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700">
-              Szczegóły
-            </a>
+            <!-- Przycisk zakończ - widoczny tylko gdy status PAID -->
+            <button
+              *ngIf="reservation.status === ReservationStatus.PAID"
+              (click)="finishReservation(reservation.id)"
+              class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 dark:bg-purple-700 dark:hover:bg-purple-800 dark:focus:ring-purple-800">
+              Zakończ wypożyczenie
+            </button>
           </div>
         </div>
       </div>

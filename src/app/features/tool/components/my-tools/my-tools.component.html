@@ -89,6 +89,18 @@
             </div>
           </div>
 
+          <!-- Status weryfikacji -->
+          <div class="mb-2">
+            <ng-container *ngIf="tool.isActive && tool.moderationStatus === 'APPROVED'; else notVisible">
+              <span class="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Widoczne publicznie</span>
+            </ng-container>
+            <ng-template #notVisible>
+              <span *ngIf="tool.moderationStatus === 'PENDING'" class="px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Oczekuje na weryfikację – nie jest widoczne publicznie</span>
+              <span *ngIf="tool.moderationStatus === 'REJECTED'" class="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">Odrzucone – nie jest widoczne publicznie</span>
+              <span *ngIf="tool.moderationStatus === 'APPROVED' && !tool.isActive" class="px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">Zatwierdzone, ale nieaktywne – nie jest widoczne publicznie</span>
+            </ng-template>
+          </div>
+
           <p [class]="tool.isActive ?
                'text-gray-600 dark:text-gray-300 mb-4 line-clamp-2' :
                'text-gray-400 dark:text-gray-500 mb-4 line-clamp-2'">

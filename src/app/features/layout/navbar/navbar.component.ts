@@ -76,6 +76,13 @@ export class NavbarComponent implements OnInit, AfterViewChecked {
     return roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
   }
 
+  // Sprawdź czy użytkownik ma rolę moderatora
+  isModerator(): boolean {
+    const roles = this.tokenService.getRoles();
+    return roles.includes('MODERATOR') || roles.includes('ROLE_MODERATOR') ||
+           roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
+  }
+
   // Obsługa wpisywania w pasku wyszukiwania
   onSearchInput(event: Event) {
     const input = event.target as HTMLInputElement;

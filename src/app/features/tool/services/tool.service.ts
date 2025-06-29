@@ -109,5 +109,19 @@ setMainImage(toolId: number, imageId: number): Observable<any> {
     });
   }
 
+  updateModerationStatus(toolId: number, status: string, comment: string): Observable<any> {
+    const action = status === 'APPROVED' ? 'approve' : 'reject';
+    const url = `${environment.apiUrl}/api/v1/moderation/${toolId}/${action}`;
+    const body = { comment: comment };
+    return this.http.post<any>(url, body);
+  }
 
+  // Metody dla moderacji
+  getToolsForModeration(page: number = 0, size: number = 10): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/moderation?page=${page}&size=${size}`);
+  }
+
+  updateToolModeration(toolId: number, updateData: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${toolId}/moderation`, updateData);
+  }
 }

@@ -689,10 +689,10 @@ export class EditToolComponent {
     this.isSubmitting = false;
     this.successMessage = 'Narzędzie zostało pomyślnie zaktualizowane!';
 
-    // Przekieruj do strony szczegółów narzędzia
+    // Przekieruj do listy narzędzi użytkownika
     setTimeout(() => {
-      this.router.navigate(['/tool', this.toolId]);
-    }, 2000);
+      this.router.navigate(['/my-tools']);
+    }, 1000);
   }
 
   onToggleStatus(): void {
@@ -719,11 +719,10 @@ export class EditToolComponent {
           // Zaktualizuj dane narzędzia
           this.currentTool = response;
 
-
           // Opcjonalnie: przekieruj do listy narzędzi po pewnym czasie
           setTimeout(() => {
-            window.location.reload();
-          }, 100);
+            this.router.navigate(['/my-tools']);
+          }, 1000);
         },
         error: (error) => {
           this.isSubmitting = false;

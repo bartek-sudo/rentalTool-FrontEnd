@@ -8,6 +8,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/enviroment';
 import { AuthService } from '../../../../core/services/auth.service';
+import { TokenService } from '../../../../core/services/token.service';
 
 @Component({
   selector: 'app-tool-management',
@@ -29,8 +30,8 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
   showDeleteModal = false;
   showModerationModal = false;
   selectedTool: Tool | null = null;
+  moderationAction: 'approve' | 'reject' | 'remoderation' = 'approve';
   moderationComment = '';
-  moderationAction: 'approve' | 'reject' = 'approve';
 
   // Message states
   showSuccessMessage = false;
@@ -50,7 +51,6 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
 
   // Role management
   userRole = '';
-  isAdmin = false;
   isModerator = false;
 
   private destroy$ = new Subject<void>();
@@ -59,7 +59,8 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
     private toolService: ToolService,
     private router: Router,
     private http: HttpClient,
-    private authService: AuthService
+    public authService: AuthService,
+    public tokenService: TokenService
   ) {}
 
   ngOnInit() {
@@ -73,16 +74,18 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
   }
 
   checkUserRole() {
-    const user = this.authService.currentUser();
-    if (user) {
-      this.userRole = user.role || '';
-      this.isAdmin = user.role === 'ADMIN';
-      this.isModerator = user.role === 'MODERATOR';
-    }
+    const roles = this.tokenService.getRoles();
+    this.isModerator = roles.includes('MODERATOR') || roles.includes('ROLE_MODERATOR') || this.isAdmin();
+  }
+
+  // Sprawdź czy użytkownik ma rolę admin
+  isAdmin(): boolean {
+    const roles = this.tokenService.getRoles();
+    return roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
   }
 
   getPageTitle(): string {
-    if (this.isAdmin) {
+    if (this.isAdmin()) {
       return 'Zarządzanie narzędziami';
     } else if (this.isModerator) {
       return 'Moderacja narzędzi';
@@ -163,27 +166,48 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
     this.showModerationModal = true;
   }
 
-  submitModeration(action: 'approve' | 'reject') {
-    if (!this.selectedTool?.id) return;
+  submitModeration(action: 'approve' | 'reject' | 'remoderation'): void {
+    if (!this.selectedTool) return;
 
-    // Walidacja komentarza przy odrzucaniu
-    if (action === 'reject' && !this.moderationComment.trim()) {
-      return; // Nie wysyłaj jeśli komentarz jest wymagany ale nie podany
+    if ((action === 'reject' || action === 'remoderation') && !this.moderationComment.trim()) {
+      return; // Walidacja już w template
     }
 
-    const status = action === 'approve' ? 'APPROVED' : 'REJECTED';
+    if (action === 'remoderation') {
+      this.toolService.requireRemoderation(this.selectedTool.id, this.moderationComment).subscribe({
+        next: () => {
+          this.displaySuccessMessage('Narzędzie zostało oznaczone do ponownej moderacji');
+          this.closeModals();
+          this.loadTools();
+        },
+        error: (error) => {
+          console.error('Błąd podczas wymagania ponownej moderacji:', error);
+          this.displayErrorMessage('Błąd podczas wymagania ponownej moderacji');
+        }
+      });
+      return;
+    }
 
-    this.toolService.updateModerationStatus(this.selectedTool.id, status, this.moderationComment.trim()).subscribe({
+    // Dla akcji approve/reject używam updateModerationStatus
+    const status = action === 'approve' ? 'APPROVED' : 'REJECTED';
+    this.toolService.updateModerationStatus(this.selectedTool.id, status, this.moderationComment).subscribe({
       next: () => {
+        this.displaySuccessMessage(`Narzędzie zostało ${action === 'approve' ? 'zatwierdzone' : 'odrzucone'}`);
         this.closeModals();
         this.loadTools();
-        this.displaySuccessMessage(`Narzędzie zostało ${action === 'approve' ? 'zatwierdzone' : 'odrzucone'}`);
       },
       error: (error) => {
         console.error('Błąd podczas moderacji:', error);
         this.displayErrorMessage(`Błąd podczas ${action === 'approve' ? 'zatwierdzania' : 'odrzucania'} narzędzia`);
       }
     });
+  }
+
+  requireRemoderation(tool: Tool): void {
+    this.selectedTool = tool;
+    this.moderationAction = 'remoderation';
+    this.moderationComment = '';
+    this.showModerationModal = true;
   }
 
   showToolDetailsModal(tool: Tool) {
@@ -203,12 +227,10 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
     this.closeModals();
   }
 
-  closeModals() {
-    this.showDeleteModal = false;
+  closeModals(): void {
     this.showModerationModal = false;
     this.selectedTool = null;
     this.moderationComment = '';
-    this.moderationAction = 'approve';
   }
 
   displaySuccessMessage(message: string) {

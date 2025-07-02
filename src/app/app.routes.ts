@@ -56,6 +56,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/reservation/components/my-tool-reservations/my-tool-reservations.component').then(m => m.MyToolReservationsComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'account-settings',
+    loadComponent: () => import('./features/user/components/account-settings/account-settings.component').then(m => m.AccountSettingsComponent),
+    canActivate: [authGuard]
+  },
   // Admin routes
   {
     path: 'admin',

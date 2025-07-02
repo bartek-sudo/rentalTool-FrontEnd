@@ -56,4 +56,8 @@ export class UserService {
   changeUserRole(id: number, role: string): Observable<HttpResponse<{ user: User }>> {
     return this.http.patch<HttpResponse<{ user: User }>>(`${this.apiUrl}/admin/${id}/role`, { role });
   }
+
+  updateOwnUser(updateData: Partial<User>): Observable<HttpResponse<{ user: User }>> {
+    return this.http.put<HttpResponse<{ user: User }>>(`${this.apiUrl}/me`, updateData);
+  }
 }

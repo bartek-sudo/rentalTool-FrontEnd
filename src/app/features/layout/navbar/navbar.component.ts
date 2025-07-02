@@ -117,4 +117,9 @@ export class NavbarComponent implements OnInit, AfterViewChecked {
   toggleMobileSearch() {
     this.showMobileSearch = !this.showMobileSearch;
   }
+
+  getInitials(firstName?: string | null, lastName?: string | null): string {
+    if (!firstName || !lastName) return '?';
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
+  }
 }

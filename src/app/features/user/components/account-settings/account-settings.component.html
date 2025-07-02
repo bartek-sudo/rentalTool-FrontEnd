@@ -1,0 +1,110 @@
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900">
+  <div class="container mx-auto px-4 py-8">
+    <div class="max-w-xl mx-auto">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8">Ustawienia konta</h1>
+
+      <!-- Komunikaty dla formularza profilu -->
+      <div *ngIf="errorMessage" class="mb-6 p-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200/10 dark:text-red-400" role="alert">
+        {{ errorMessage }}
+      </div>
+      <div *ngIf="successMessage" class="mb-6 p-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200/10 dark:text-green-400" role="alert">
+        {{ successMessage }}
+      </div>
+
+      <!-- Formularz edycji danych osobowych -->
+      <form *ngIf="profileForm" [formGroup]="profileForm" (ngSubmit)="onSaveProfile()" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+        <h2 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Dane osobowe</h2>
+        <div class="mb-6">
+          <label for="firstName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Imię</label>
+          <input type="text" id="firstName" formControlName="firstName"
+                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                 [class.border-red-500]="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched">
+          <div *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            Imię jest wymagane.
+          </div>
+        </div>
+        <div class="mb-6">
+          <label for="lastName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nazwisko</label>
+          <input type="text" id="lastName" formControlName="lastName"
+                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                 [class.border-red-500]="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched">
+          <div *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            Nazwisko jest wymagane.
+          </div>
+        </div>
+        <div class="mb-6">
+          <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">E-mail</label>
+          <input type="email" id="email" formControlName="email"
+                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                 [class.border-red-500]="profileForm.get('email')?.invalid && profileForm.get('email')?.touched">
+          <div *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            Podaj poprawny adres e-mail.
+          </div>
+          <div class="mt-2 flex items-center gap-2">
+            <span *ngIf="user?.verified; else notVerified" class="text-green-600 text-sm font-medium flex items-center gap-1">
+              <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              Konto zweryfikowane
+            </span>
+            <ng-template #notVerified>
+              <span class="text-yellow-600 text-sm font-medium flex items-center gap-1">
+                <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3" /></svg>
+                Konto niezweryfikowane
+              </span>
+            </ng-template>
+          </div>
+          <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Po zmianie adresu e-mail konieczna będzie ponowna weryfikacja konta.
+          </div>
+        </div>
+        <button type="submit" [disabled]="profileForm.invalid || loading"
+                class="w-full py-2.5 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed">
+          <span *ngIf="loading">Zapisywanie...</span>
+          <span *ngIf="!loading">Zapisz zmiany</span>
+        </button>
+      </form>
+
+      <!-- Formularz zmiany hasła -->
+      <form *ngIf="passwordForm" [formGroup]="passwordForm" (ngSubmit)="onChangePassword()" class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h2 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Zmiana hasła</h2>
+        <div class="mb-6">
+          <label for="currentPassword" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Aktualne hasło</label>
+          <input type="password" id="currentPassword" formControlName="currentPassword"
+                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                 [class.border-red-500]="passwordForm.get('currentPassword')?.invalid && passwordForm.get('currentPassword')?.touched">
+          <div *ngIf="passwordForm.get('currentPassword')?.touched && passwordForm.get('currentPassword')?.errors" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            <ng-container *ngIf="passwordForm.get('currentPassword')?.errors?.['required']">Stare hasło jest wymagane.</ng-container>
+            <ng-container *ngIf="passwordForm.get('currentPassword')?.errors?.['minlength']">Hasło musi mieć co najmniej 6 znaków.</ng-container>
+            <ng-container *ngIf="passwordForm.get('currentPassword')?.errors?.['maxlength']">Hasło może mieć maksymalnie 256 znaków.</ng-container>
+          </div>
+        </div>
+        <div class="mb-6">
+          <label for="newPassword" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nowe hasło</label>
+          <input type="password" id="newPassword" formControlName="newPassword"
+                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                 [class.border-red-500]="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+          <div *ngIf="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.errors" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            <ng-container *ngIf="passwordForm.get('newPassword')?.errors?.['required']">Nowe hasło jest wymagane.</ng-container>
+            <ng-container *ngIf="passwordForm.get('newPassword')?.errors?.['minlength']">Hasło musi mieć co najmniej 6 znaków.</ng-container>
+            <ng-container *ngIf="passwordForm.get('newPassword')?.errors?.['maxlength']">Hasło może mieć maksymalnie 256 znaków.</ng-container>
+          </div>
+        </div>
+        <div class="mb-6">
+          <label for="confirmPassword" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Powtórz nowe hasło</label>
+          <input type="password" id="confirmPassword" formControlName="confirmPassword"
+                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                 [class.border-red-500]="passwordForm.hasError('passwordsNotMatch') && passwordForm.get('confirmPassword')?.touched">
+          <div *ngIf="passwordForm.hasError('passwordsNotMatch') && passwordForm.get('confirmPassword')?.touched" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            Hasła nie są takie same.
+          </div>
+        </div>
+        <div *ngIf="passwordErrorMessage" class="mb-4 text-sm text-red-600 dark:text-red-400">{{ passwordErrorMessage }}</div>
+        <div *ngIf="passwordSuccessMessage" class="mb-4 text-sm text-green-600 dark:text-green-400">{{ passwordSuccessMessage }}</div>
+        <button type="submit" [disabled]="passwordForm.invalid || loading"
+                class="w-full py-2.5 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed">
+          <span *ngIf="loading">Zmienianie hasła...</span>
+          <span *ngIf="!loading">Zmień hasło</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

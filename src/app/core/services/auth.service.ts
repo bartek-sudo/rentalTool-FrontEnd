@@ -86,4 +86,11 @@ export class AuthService {
     }
   }
 
+  changePassword(oldPassword: string, newPassword: string): Observable<HttpResponse<any>> {
+    return this.http.post<HttpResponse<any>>(`${this.apiURL}/change-password`, {
+      oldPassword,
+      newPassword
+    });
+  }
+
 }

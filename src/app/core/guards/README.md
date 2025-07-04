@@ -19,7 +19,7 @@ Sprawdza czy użytkownik jest zalogowany.
 ```
 
 ### 2. AdminGuard (`admin.guard.ts`)
-Sprawdza czy użytkownik ma rolę ADMIN lub ROLE_ADMIN.
+Sprawdza czy użytkownik ma rolę ADMIN.
 
 **Użycie:**
 ```typescript
@@ -30,64 +30,23 @@ Sprawdza czy użytkownik ma rolę ADMIN lub ROLE_ADMIN.
 }
 ```
 
-### 3. RoleGuard (`role.guard.ts`)
-Sprawdza czy użytkownik ma określone role. Role są definiowane w danych routa.
+### 3. ModeratorGuard (`moderator.guard.ts`)
+Sprawdza czy użytkownik ma rolę MODERATOR lub ADMIN.
 
 **Użycie:**
 ```typescript
 {
-  path: 'admin-only',
-  component: AdminOnlyComponent,
-  canActivate: [roleGuard],
-  data: { roles: ['ADMIN', 'MODERATOR'] }
+  path: 'moderator',
+  component: ModeratorComponent,
+  canActivate: [moderatorGuard]
 }
 ```
 
 ## Jak działają
 
 1. **AuthGuard** - sprawdza czy użytkownik jest zalogowany używając `AuthService.isLogged()`
-2. **AdminGuard** - sprawdza role z JWT tokena używając `TokenService.getRoles()`
-3. **RoleGuard** - sprawdza czy użytkownik ma którąkolwiek z wymaganych ról
-
-## Role w JWT tokenie
-
-Guardy oczekują, że role są przechowywane w JWT tokenie w polu `authorities` jako tablica stringów. Obsługiwane formaty:
-- `ADMIN`
-- `ROLE_ADMIN`
-- `MODERATOR`
-- `ROLE_MODERATOR`
-
-## Przykłady routów
-
-```typescript
-export const routes: Routes = [
-  // Publiczne routy
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  
-  // Chronione routy - wymagają logowania
-  { 
-    path: 'profile', 
-    component: ProfileComponent, 
-    canActivate: [authGuard] 
-  },
-  
-  // Admin routy - wymagają roli admin
-  { 
-    path: 'admin', 
-    component: AdminComponent, 
-    canActivate: [adminGuard] 
-  },
-  
-  // Ruty z określonymi rolami
-  { 
-    path: 'moderator', 
-    component: ModeratorComponent, 
-    canActivate: [roleGuard],
-    data: { roles: ['MODERATOR', 'ADMIN'] }
-  }
-];
-```
+2. **AdminGuard** - sprawdza czy użytkownik ma rolę ADMIN
+3. **ModeratorGuard** - sprawdza czy użytkownik ma rolę MODERATOR lub ADMIN
 
 ## Bezpieczeństwo
 

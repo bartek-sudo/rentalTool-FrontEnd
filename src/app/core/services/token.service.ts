@@ -13,7 +13,7 @@ interface TokenPayload {
   providedIn: 'root'
 })
 export class TokenService {
-  private readonly TOKEN_KEY = 'auth_token';
+  private readonly TOKEN_KEY = 'jwt';
 
   constructor(private cookieService: CookieService) { }
 
@@ -49,8 +49,7 @@ export class TokenService {
   }
 
   destroyToken(): void {
-    // localStorage.removeItem(this.TOKEN_KEY);
-    this.cookieService.delete(this.TOKEN_KEY, '/');
+    // Nie usuwaj ciasteczka po stronie frontu, backend ustawia wygasłe cookie przy wylogowaniu
   }
 
   getDecodedToken(): TokenPayload | null {

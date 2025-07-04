@@ -37,7 +37,6 @@ export class AuthService {
           }
         }),
         catchError(error => {
-          console.error('Login error', error);
           throw error;
         })
       );
@@ -47,17 +46,27 @@ export class AuthService {
     return this.http.post<HttpResponse<{ user: User }>>(`${this.apiURL}/register`, userData)
       .pipe(
         catchError(error => {
-          console.error('Register error', error);
           throw error;
         })
       );
   }
 
   logout(): void {
-    this.tokenService.destroyToken();
-    this.currentUser.set(null);
-    this.isLogged.set(false);
-    this.router.navigate(['/login']);
+    this.http.post(`${this.apiURL}/logout`, {}, { withCredentials: true }).subscribe({
+      next: () => {
+        this.tokenService.destroyToken();
+        this.currentUser.set(null);
+        this.isLogged.set(false);
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        // Nawet jeśli backend nie odpowie, wyczyść stan lokalnie
+        this.tokenService.destroyToken();
+        this.currentUser.set(null);
+        this.isLogged.set(false);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   getUserInfo(): Observable<HttpResponse<{ user: User }>> {
@@ -70,7 +79,6 @@ export class AuthService {
           }
         }),
         catchError(error => {
-          console.error('Get user info error', error);
           this.logout();
           throw error;
         })
@@ -78,11 +86,11 @@ export class AuthService {
   }
 
   checkAuthStatus(): void {
-    if (this.tokenService.getToken() && !this.tokenService.isTokenExpired()) {
+    if (this.tokenService.getToken()) {
       this.getUserInfo().subscribe();
-    } else if (this.tokenService.getToken()) {
-      // Token wygasł
-      this.logout();
+    } else {
+      this.currentUser.set(null);
+      this.isLogged.set(false);
     }
   }
 

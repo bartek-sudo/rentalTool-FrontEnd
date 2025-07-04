@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
 import { moderatorGuard } from './core/guards/moderator.guard';
-import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -12,11 +11,6 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./features/auth/components/login/login.component').then(m => m.LoginComponent)
-  },
-  {
-    path: 'change-password',
-    loadComponent: () => import('./features/auth/components/change-password/change-password.component').then(m => m.ChangePasswordComponent),
-    canActivate: [authGuard]
   },
   {
     path: '',
@@ -81,11 +75,11 @@ export const routes: Routes = [
       },
       {
         path: 'tools',
-        loadComponent: () => import('./features/admin/components/tool-management/tool-management.component').then(m => m.ToolManagementComponent)
+        loadComponent: () => import('./features/moderator/components/tool-management/tool-management.component').then(m => m.ToolManagementComponent)
       },
       {
         path: 'reservations',
-        loadComponent: () => import('./features/admin/components/reservation-management/reservation-management.component').then(m => m.ReservationManagementComponent)
+        loadComponent: () => import('./features/moderator/components/reservation-management/reservation-management.component').then(m => m.ReservationManagementComponent)
       }
     ]
   },
@@ -105,11 +99,11 @@ export const routes: Routes = [
       },
       {
         path: 'tools',
-        loadComponent: () => import('./features/admin/components/tool-management/tool-management.component').then(m => m.ToolManagementComponent)
+        loadComponent: () => import('./features/moderator/components/tool-management/tool-management.component').then(m => m.ToolManagementComponent)
       },
       {
         path: 'reservations',
-        loadComponent: () => import('./features/admin/components/reservation-management/reservation-management.component').then(m => m.ReservationManagementComponent)
+        loadComponent: () => import('./features/moderator/components/reservation-management/reservation-management.component').then(m => m.ReservationManagementComponent)
       }
     ]
   }

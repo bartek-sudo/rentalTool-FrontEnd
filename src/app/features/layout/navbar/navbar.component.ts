@@ -72,15 +72,14 @@ export class NavbarComponent implements OnInit, AfterViewChecked {
 
   // Sprawdź czy użytkownik ma rolę admin
   isAdmin(): boolean {
-    const roles = this.tokenService.getRoles();
-    return roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
+    const user = this.authService.currentUser();
+    return user?.userType === 'ADMIN';
   }
 
   // Sprawdź czy użytkownik ma rolę moderatora
   isModerator(): boolean {
-    const roles = this.tokenService.getRoles();
-    return roles.includes('MODERATOR') || roles.includes('ROLE_MODERATOR') ||
-           roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
+    const user = this.authService.currentUser();
+    return user?.userType === 'MODERATOR' || user?.userType === 'ADMIN';
   }
 
   // Obsługa wpisywania w pasku wyszukiwania

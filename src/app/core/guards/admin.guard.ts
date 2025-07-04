@@ -15,8 +15,8 @@ export const adminGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  const roles = tokenService.getRoles();
-  const hasAdminRole = roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
+  const user = authService.currentUser();
+  const hasAdminRole = user?.userType === 'ADMIN';
 
   if (hasAdminRole) {
     return true;

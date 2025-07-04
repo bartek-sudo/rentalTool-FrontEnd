@@ -15,9 +15,8 @@ export const moderatorGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  const roles = tokenService.getRoles();
-  const hasModeratorRole = roles.includes('MODERATOR') || roles.includes('ROLE_MODERATOR') ||
-                          roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
+  const user = authService.currentUser();
+  const hasModeratorRole = user?.userType === 'MODERATOR' || user?.userType === 'ADMIN';
 
   if (hasModeratorRole) {
     return true;

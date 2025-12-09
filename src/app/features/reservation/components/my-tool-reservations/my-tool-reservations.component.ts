@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { Reservation, ReservationStatus } from '../../model/reservation.model';
+import { Reservation, ReservationStatus, normalizeReservationStatus } from '../../model/reservation.model';
 import { ReservationService } from '../../services/reservation.service';
 import { ToolService } from '../../../tool/services/tool.service';
 import { UserService } from '../../../user/services/user.service';
@@ -23,8 +23,7 @@ export class MyToolReservationsComponent {
     { value: 'all', label: 'Wszystkie' },
     { value: 'PENDING', label: 'Oczekujące' },
     { value: 'CONFIRMED', label: 'Potwierdzone' },
-    { value: 'PAID', label: 'Opłacone' },
-    { value: 'FINISHED', label: 'Zakończone' },
+    { value: 'REGULATIONS_ACCEPTED', label: 'Regulamin zaakceptowany' },
     { value: 'CANCELED', label: 'Anulowane' }
   ];
 
@@ -47,6 +46,10 @@ export class MyToolReservationsComponent {
     this.reservationService.getMyToolsReservations().subscribe({
       next: (response) => {
         this.reservations = response.data.reservations;
+        // Normalizuj statusy - zamień stare statusy PAID/FINISHED na nowe
+        this.reservations.forEach(reservation => {
+          reservation.status = normalizeReservationStatus(reservation.status);
+        });
 
         // Pobierz informacje o narzędziach i najemcach
         this.reservations.forEach(reservation => {
@@ -109,6 +112,8 @@ export class MyToolReservationsComponent {
 
           // Aktualizuj rezerwację z odpowiedzi API
           this.reservations[index] = response.data.reservation;
+          // Normalizuj status - zamień stare statusy PAID/FINISHED na nowe
+          this.reservations[index].status = normalizeReservationStatus(this.reservations[index].status);
 
           // Przywróć zachowane referencje
           this.reservations[index].tool = toolRef;
@@ -125,36 +130,6 @@ export class MyToolReservationsComponent {
     });
   }
 
-  finishReservation(reservationId: number): void {
-    this.isLoading = true;
-
-    this.reservationService.finishReservation(reservationId).subscribe({
-      next: (response) => {
-        // Znajdź indeks rezerwacji w tablicy
-        const index = this.reservations.findIndex(r => r.id === reservationId);
-
-        if (index !== -1) {
-          // Zachowaj referencje do tool i renter przed aktualizacją
-          const toolRef = this.reservations[index].tool;
-          const renterRef = this.reservations[index].renter;
-
-          // Aktualizuj rezerwację z odpowiedzi API
-          this.reservations[index] = response.data.reservation;
-
-          // Przywróć zachowane referencje
-          this.reservations[index].tool = toolRef;
-          this.reservations[index].renter = renterRef;
-        }
-
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Błąd podczas kończenia rezerwacji:', error);
-        this.errorMessage = 'Nie udało się zakończyć rezerwacji. Spróbuj ponownie.';
-        this.isLoading = false;
-      }
-    });
-  }
 
   // Helper do formatowania daty
   formatDate(dateString: string | null | undefined): string {
@@ -182,8 +157,7 @@ export class MyToolReservationsComponent {
     switch (status) {
       case ReservationStatus.PENDING: return 'Oczekująca';
       case ReservationStatus.CONFIRMED: return 'Potwierdzona';
-      case ReservationStatus.PAID: return 'Opłacona';
-      case ReservationStatus.FINISHED: return 'Zakończona';
+      case ReservationStatus.REGULATIONS_ACCEPTED: return 'Regulamin zaakceptowany';
       case ReservationStatus.CANCELED: return 'Anulowana';
       default: return status;
     }
@@ -194,8 +168,7 @@ export class MyToolReservationsComponent {
     switch (status) {
       case ReservationStatus.PENDING: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
       case ReservationStatus.CONFIRMED: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      case ReservationStatus.PAID: return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case ReservationStatus.FINISHED: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      case ReservationStatus.REGULATIONS_ACCEPTED: return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
       case ReservationStatus.CANCELED: return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }

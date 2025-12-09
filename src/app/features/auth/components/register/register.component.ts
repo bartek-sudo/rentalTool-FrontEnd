@@ -19,12 +19,15 @@ export class RegisterComponent implements OnInit {
   registerForm: FormGroup;
   isLoading = false;
   errorMessage = '';
+  registrationSuccess = false;
+  registeredEmail = '';
 
   constructor() {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
+      phoneNumber: ['', [Validators.required, Validators.minLength(9), Validators.maxLength(15)]], // Wymagane pole
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required, Validators.minLength(6)]],
       terms: [false, Validators.requiredTrue]
@@ -47,18 +50,26 @@ export class RegisterComponent implements OnInit {
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.registrationSuccess = false;
 
     this.authService.register(this.registerForm.value).subscribe({
       next: () => {
         this.isLoading = false;
-        this.router.navigate(['/']);
+        this.registrationSuccess = true;
+        this.registeredEmail = this.registerForm.get('email')?.value;
+        // Przekieruj na stronę weryfikacji emaila po 3 sekundach
+        setTimeout(() => {
+          this.router.navigate(['/verify-email'], {
+            queryParams: { email: this.registeredEmail }
+          });
+        }, 3000);
       },
       error: error => {
         this.isLoading = false;
         if (error.error && error.error.message) {
           this.errorMessage = error.error.message;
         } else {
-          this.errorMessage = 'An error occurred. Please try again later.';
+          this.errorMessage = 'Wystąpił błąd. Spróbuj ponownie później.';
         }
       }
     });

@@ -94,14 +94,6 @@
               class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 dark:bg-green-700 dark:hover:bg-green-800 dark:focus:ring-green-800">
               Potwierdź
             </button>
-
-            <!-- Przycisk zakończ - widoczny tylko gdy status PAID -->
-            <button
-              *ngIf="reservation.status === ReservationStatus.PAID"
-              (click)="finishReservation(reservation.id)"
-              class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 dark:bg-purple-700 dark:hover:bg-purple-800 dark:focus:ring-purple-800">
-              Zakończ wypożyczenie
-            </button>
           </div>
         </div>
       </div>

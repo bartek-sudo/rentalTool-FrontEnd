@@ -56,6 +56,17 @@
             Po zmianie adresu e-mail konieczna będzie ponowna weryfikacja konta.
           </div>
         </div>
+        <div class="mb-6">
+          <label for="phoneNumber" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Numer telefonu</label>
+          <input type="tel" id="phoneNumber" formControlName="phoneNumber" placeholder="+48 123 456 789"
+                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                 [class.border-red-500]="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched">
+          <div *ngIf="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched" class="mt-1 text-sm text-red-600 dark:text-red-400">
+            <ng-container *ngIf="profileForm.get('phoneNumber')?.errors?.['required']">Numer telefonu jest wymagany.</ng-container>
+            <ng-container *ngIf="profileForm.get('phoneNumber')?.errors?.['minlength']">Numer telefonu musi mieć co najmniej 9 znaków.</ng-container>
+            <ng-container *ngIf="profileForm.get('phoneNumber')?.errors?.['maxlength']">Numer telefonu nie może mieć więcej niż 15 znaków.</ng-container>
+          </div>
+        </div>
         <button type="submit" [disabled]="profileForm.invalid || loading"
                 class="w-full py-2.5 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed">
           <span *ngIf="loading">Zapisywanie...</span>

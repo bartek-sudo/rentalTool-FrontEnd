@@ -61,8 +61,8 @@ export class ToolAvailabilityComponent implements OnInit {
     const startDateStr = this.dateToString(startDate);
     const endDateStr = this.dateToString(endDate);
 
-    console.log('Start date:', startDateStr); // Powinno być 2025-05-01
-    console.log('End date:', endDateStr);
+    // console.log('Start date:', startDateStr); 
+    // console.log('End date:', endDateStr);
 
     this.toolService.getToolAvailability(this.toolId, startDateStr, endDateStr)
       .subscribe({
@@ -277,7 +277,8 @@ export class ToolAvailabilityComponent implements OnInit {
     const reservationData = {
       startDate: this.dateToString(this.selectedStartDate),
       endDate: this.dateToString(this.selectedEndDate),
-      toolId: this.toolId
+      toolId: this.toolId,
+      termsId: 1 // Domyślnie regulamin ogólny
     };
 
     this.reservationService.createReservation(reservationData)

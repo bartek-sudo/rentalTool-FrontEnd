@@ -6,4 +6,6 @@ export interface ToolUpdateRequest {
   address: string;
   latitude?: number;
   longitude?: number;
+  termsId?: number | null;
+  isActive?: boolean;
 }

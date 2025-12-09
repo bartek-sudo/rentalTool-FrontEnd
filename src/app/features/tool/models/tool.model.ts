@@ -12,10 +12,12 @@ export interface Tool {
   address: string;
   latitude?: number;
   longitude?: number;
+  termsId?: number | null;
   mainImageUrl: string;
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
   moderationStatus?: string;
   moderationComment?: string;
+  distance?: number | null; // Odległość w km od lokalizacji użytkownika
 }

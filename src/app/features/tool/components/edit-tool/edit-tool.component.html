@@ -63,18 +63,6 @@
         </div>
       </div>
 
-      <!-- Komunikaty -->
-      <div *ngIf="errorMessage"
-        class="mb-6 p-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200/10 dark:text-red-400" role="alert">
-        {{ errorMessage }}
-      </div>
-
-      <div *ngIf="successMessage"
-        class="mb-6 p-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200/10 dark:text-green-400"
-        role="alert">
-        {{ successMessage }}
-      </div>
-
       <!-- Loader podczas ładowania danych narzędzia -->
       <div *ngIf="isLoadingTool" class="flex justify-center items-center py-12">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -115,6 +103,51 @@
           <div *ngIf="categoryControl?.invalid && categoryControl?.touched"
             class="mt-1 text-sm text-red-600 dark:text-red-400">
             <div *ngIf="categoryControl?.errors?.['required']">Kategoria jest wymagana</div>
+          </div>
+        </div>
+
+        <!-- Regulamin -->
+        <div class="mb-6">
+          <label for="termsId" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+            Regulamin przypisany do narzędzia
+          </label>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Wybierz dokument, który najemca będzie musiał zaakceptować przed otrzymaniem danych kontaktowych właściciela.
+          </p>
+
+          <div *ngIf="termsLoading" class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            Ładowanie listy regulaminów...
+          </div>
+          <div *ngIf="termsError" class="text-sm text-red-600 dark:text-red-400 mb-2">
+            {{ termsError }}
+          </div>
+
+          <select id="termsId" formControlName="termsId"
+            [disabled]="termsLoading || filteredTerms.length === 0"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 disabled:opacity-70">
+            <option *ngFor="let term of filteredTerms" [ngValue]="term.id">
+              {{ term.title }} • {{ getTermCategoryLabel(term.category) }}
+            </option>
+          </select>
+
+          <div *ngIf="!termsLoading && filteredTerms.length === 0" class="mt-2 text-sm text-yellow-700 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 p-3 rounded">
+            Brak regulaminów dla bieżącej kategorii. Przypisz dokument ogólny lub poproś administratora o dodanie nowego.
+          </div>
+
+          <div *ngIf="selectedTermDetails" class="mt-4 p-4 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  {{ getTermCategoryLabel(selectedTermDetails.category) }}
+                </p>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ selectedTermDetails.title }}
+                </h4>
+              </div>
+            </div>
+            <div class="mt-3 text-sm text-gray-700 dark:text-gray-200 whitespace-pre-line max-h-48 overflow-y-auto">
+              {{ selectedTermDetails.content }}
+            </div>
           </div>
         </div>
 
@@ -425,6 +458,18 @@
         <!-- Ukryte pola z geolokalizacją -->
         <input type="hidden" formControlName="latitude">
         <input type="hidden" formControlName="longitude">
+
+        <!-- Komunikaty błędów i sukcesu -->
+        <div *ngIf="errorMessage"
+          class="mt-6 p-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200/10 dark:text-red-400" role="alert">
+          {{ errorMessage }}
+        </div>
+
+        <div *ngIf="successMessage"
+          class="mt-6 p-4 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200/10 dark:text-green-400"
+          role="alert">
+          {{ successMessage }}
+        </div>
 
         <!-- Przyciski -->
         <div class="flex justify-between mt-8">

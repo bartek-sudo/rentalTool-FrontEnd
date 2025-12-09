@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { initFlowbite } from 'flowbite';
 
@@ -15,10 +15,14 @@ export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   loginForm: FormGroup;
   isLoading = false;
   errorMessage = '';
+  verificationSuccess = false;
+  emailNotVerified = false;
+  userEmail = '';
 
   constructor() {
     this.loginForm = this.fb.group({
@@ -28,7 +32,18 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit() {
-      initFlowbite();
+    initFlowbite();
+    
+    // Sprawdź czy użytkownik został przekierowany po weryfikacji
+    this.route.queryParams.subscribe(params => {
+      if (params['verified'] === 'true') {
+        this.verificationSuccess = true;
+        // Ukryj komunikat po 5 sekundach
+        setTimeout(() => {
+          this.verificationSuccess = false;
+        }, 5000);
+      }
+    });
   }
 
   onSubmit(): void {
@@ -36,6 +51,8 @@ export class LoginComponent implements OnInit {
 
     this.isLoading = true;
     this.errorMessage = '';
+    this.emailNotVerified = false;
+    this.userEmail = this.loginForm.get('email')?.value;
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
@@ -44,13 +61,37 @@ export class LoginComponent implements OnInit {
       },
       error: error => {
         this.isLoading = false;
-        if (error.error && error.error.message) {
-          this.errorMessage = error.error.message;
+        
+        const errorStatus = error.status || error.error?.statusCode;
+        const errorReason = error.error?.reason || '';
+        const errorMessage = error.error?.message || '';
+        
+        // Sprawdź czy błąd dotyczy niezweryfikowanego emaila
+        // WAŻNE: Używamy TYLKO reason "Email not verified" jako wskaźnika
+        // Backend zwraca ten konkretny reason TYLKO dla błędów weryfikacji emaila
+        // Nie używamy "Illegal account access" ani message, bo mogą pojawić się przy różnych błędach (np. złe hasło)
+        
+        // Błąd weryfikacji emaila TYLKO jeśli reason jest dokładnie "Email not verified"
+        const isEmailNotVerified = errorReason === 'Email not verified';
+        
+        if (isEmailNotVerified) {
+          this.emailNotVerified = true;
+          // Zawsze używaj polskiego komunikatu dla niezweryfikowanego emaila
+          this.errorMessage = 'Twój email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową i kliknij link weryfikacyjny, aby aktywować konto.';
         } else {
-          this.errorMessage = 'An error occurred. Please try again later.';
+          // Inny błąd - nie dotyczy weryfikacji (np. złe hasło, nieprawidłowe dane)
+          this.emailNotVerified = false;
+          this.errorMessage = errorMessage || 'Wystąpił błąd. Spróbuj ponownie później.';
         }
       }
     });
   }
 
+  goToVerificationPage(): void {
+    this.router.navigate(['/verify-email'], {
+      queryParams: { email: this.userEmail }
+    });
+  }
+
 }
+

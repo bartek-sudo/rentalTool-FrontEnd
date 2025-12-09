@@ -19,7 +19,10 @@ export class TokenService {
 
   getToken(): string | null {
     // return localStorage.getItem(this.TOKEN_KEY);
-    return this.cookieService.get(this.TOKEN_KEY) || null;
+    // Cookie może być HttpOnly i nie być dostępne dla JavaScript
+    // W takim przypadku zwracamy null, ale cookie będzie automatycznie wysyłane z żądaniami HTTP
+    const token = this.cookieService.get(this.TOKEN_KEY) || null;
+    return token;
   }
 
   setToken(token: string): void {

@@ -44,6 +44,7 @@ export class AccountSettingsComponent implements OnInit {
       firstName: [this.user?.firstName, Validators.required],
       lastName: [this.user?.lastName, Validators.required],
       email: [this.user?.email, [Validators.required, Validators.email]],
+      phoneNumber: [this.user?.phoneNumber || '', [Validators.required, Validators.minLength(9), Validators.maxLength(15)]], // Wymagane pole
     });
     this.passwordForm = this.fb.group({
       currentPassword: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(256)]],

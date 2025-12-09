@@ -47,6 +47,25 @@
             }
           </div>
           <div>
+            <label for="phoneNumber" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Numer telefonu</label>
+            <input type="tel" name="phoneNumber" id="phoneNumber" formControlName="phoneNumber" placeholder="+48 123 456 789"
+              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              required="">
+            @if (registerForm.get('phoneNumber')?.invalid && registerForm.get('phoneNumber')?.touched) {
+            <div class="mt-2 text-sm text-red-600 dark:text-red-500">
+              @if (registerForm.get('phoneNumber')?.errors?.['required']) {
+                Numer telefonu jest wymagany.
+              }
+              @if (registerForm.get('phoneNumber')?.errors?.['minlength']) {
+                Numer telefonu musi mieć co najmniej 9 znaków.
+              }
+              @if (registerForm.get('phoneNumber')?.errors?.['maxlength']) {
+                Numer telefonu nie może mieć więcej niż 15 znaków.
+              }
+            </div>
+            }
+          </div>
+          <div>
             <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
             <input type="password" name="password" id="password" formControlName="password" placeholder="••••••••"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -60,7 +79,7 @@
           <div>
             <label for="confirm-password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm
               password</label>
-            <input type="confirm-password" name="confirm-password" id="confirm-password"
+            <input type="password" name="confirm-password" id="confirm-password"
               formControlName="confirmPassword" placeholder="••••••••"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               required="">
@@ -94,12 +113,37 @@
             </div>
           </div>
 
-          <button type="submit" [disabled]="registerForm.invalid || isLoading"
+          <button type="submit" [disabled]="registerForm.invalid || isLoading || registrationSuccess"
             class="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 disabled:opacity-70">
-            {{ isLoading ? 'Creating an account...' : 'Create an account'}}
+            {{ isLoading ? 'Tworzenie konta...' : registrationSuccess ? 'Konto utworzone!' : 'Utwórz konto'}}
           </button>
 
-          @if (errorMessage) {
+          @if (registrationSuccess) {
+          <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400"
+            role="alert">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="font-medium">Konto zostało utworzone pomyślnie!</p>
+                <p class="mt-2">
+                  Wysłaliśmy email weryfikacyjny na adres <strong>{{ registeredEmail }}</strong>.
+                  Sprawdź swoją skrzynkę pocztową i kliknij link weryfikacyjny, aby aktywować konto.
+                </p>
+                <p class="mt-2 text-xs">
+                  Przekierowywanie na stronę weryfikacji...
+                </p>
+              </div>
+            </div>
+          </div>
+          }
+
+          @if (errorMessage && !registrationSuccess) {
           <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400"
             role="alert">
             {{ errorMessage }}
@@ -107,8 +151,8 @@
           }
 
           <p class="text-sm font-light text-gray-500 dark:text-gray-400">
-            Already have an account? <a routerLink="/login"
-              class="font-medium text-primary-600 hover:underline dark:text-primary-500">Login here</a>
+            Masz już konto? <a routerLink="/login"
+              class="font-medium text-primary-600 hover:underline dark:text-primary-500">Zaloguj się tutaj</a>
           </p>
         </form>
       </div>

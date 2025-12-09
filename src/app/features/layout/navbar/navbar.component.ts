@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, AfterViewChecked } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, AfterViewChecked, OnDestroy, effect } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -14,7 +14,7 @@ import { ToolService } from '../../tool/services/tool.service';
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
-export class NavbarComponent implements OnInit, AfterViewChecked {
+export class NavbarComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
   isDarkMode = false;
   private previousLoginState = false;
 
@@ -27,12 +27,27 @@ export class NavbarComponent implements OnInit, AfterViewChecked {
   protected toolService = inject(ToolService);
   protected router = inject(Router);
 
+  constructor() {
+    // Obserwuj zmiany stanu użytkownika i reinicjalizuj dropdowny
+    effect(() => {
+      const isLogged = this.authService.isLogged();
+      const user = this.authService.currentUser();
+
+      // Jeśli użytkownik się zmienił (został załadowany lub zmieniony), reinicjalizuj dropdowny
+      if (isLogged && user) {
+        // Poczekaj na następny cykl renderowania, aby menu było w DOM
+        setTimeout(() => {
+          this.initUserMenuDropdown();
+        }, 200);
+      }
+    });
+  }
+
   ngOnInit() {
     // Sprawdź aktualny stan przy inicjalizacji
     this.isDarkMode = localStorage['theme'] === 'dark' ||
       (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-    initFlowbite();
     this.previousLoginState = this.authService.isLogged();
 
     // Debounce wyszukiwania
@@ -44,14 +59,42 @@ export class NavbarComponent implements OnInit, AfterViewChecked {
     });
   }
 
+  ngAfterViewInit() {
+    // Inicjalizuj dropdowny po renderowaniu DOM
+    // initFlowbite() jest już wywoływane w app.component.ts
+    this.initUserMenuDropdown();
+  }
+
+  private initUserMenuDropdown(): void {
+    // Poczekaj na następny cykl, aby upewnić się że DOM jest gotowy
+    setTimeout(() => {
+      // Sprawdź czy menu użytkownika istnieje w DOM
+      const userMenuButton = document.getElementById('user-menu-button');
+      const dropdown = document.getElementById('dropdown');
+
+      if (userMenuButton && dropdown) {
+        // Inicjalizuj tylko dropdowny (nie cały Flowbite, bo jest już zainicjalizowany)
+        initDropdowns();
+      }
+    }, 100);
+  }
+
   ngAfterViewChecked(): void {
     // Sprawdź, czy stan logowania się zmienił
     if (this.previousLoginState !== this.authService.isLogged()) {
       this.previousLoginState = this.authService.isLogged();
 
-      // Reinicjalizuj wszystkie dropdowny po zmianie stanu logowania
-      initDropdowns();
+      // Reinicjalizuj dropdowny po zmianie stanu logowania
+      if (this.authService.isLogged()) {
+        setTimeout(() => {
+          this.initUserMenuDropdown();
+        }, 200);
+      }
     }
+  }
+
+  ngOnDestroy(): void {
+    this.searchSubject.complete();
   }
 
   toggleDarkMode(): void {

@@ -23,6 +23,9 @@ export class AuthService {
   private apiURL = `${environment.apiUrl}/api/v1/auth`;
 
   constructor() {
+    // Inicjalizacja autentykacji jest obsługiwana przez APP_INITIALIZER
+    // w app.config.ts, aby zapewnić, że stan jest przywrócony przed startem aplikacji
+    // Dodatkowo wywołujemy checkAuthStatus jako zabezpieczenie
     this.checkAuthStatus();
    }
 
@@ -70,7 +73,7 @@ export class AuthService {
   }
 
   getUserInfo(): Observable<HttpResponse<{ user: User }>> {
-    return this.http.get<HttpResponse<{ user: User }>>(`${this.apiURL}/me`)
+    return this.http.get<HttpResponse<{ user: User }>>(`${this.apiURL}/me`, { withCredentials: true })
       .pipe(
         tap(response => {
           if (response.data && response.data.user) {
@@ -79,15 +82,45 @@ export class AuthService {
           }
         }),
         catchError(error => {
-          this.logout();
+          // Tylko dla błędów 401/403 wywołaj logout - token jest nieważny
+          // Backend zwraca teraz HttpResponse JSON z komunikatem błędu (zamiast pustej odpowiedzi)
+          // Komunikat jest dostępny w error.error.message dla komponentów, które go potrzebują
+          if (error.status === 401 || error.status === 403) {
+            this.tokenService.destroyToken();
+            this.currentUser.set(null);
+            this.isLogged.set(false);
+          }
           throw error;
         })
       );
   }
 
   checkAuthStatus(): void {
-    if (this.tokenService.getToken()) {
-      this.getUserInfo().subscribe();
+    const token = this.tokenService.getToken();
+    
+    if (token) {
+      // Sprawdź czy token nie wygasł
+      if (this.tokenService.isTokenExpired()) {
+        this.tokenService.destroyToken();
+        this.currentUser.set(null);
+        this.isLogged.set(false);
+        return;
+      }
+      
+      // Jeśli token jest ważny, pobierz informacje o użytkowniku
+      this.getUserInfo().subscribe({
+        next: () => {
+          // Stan użytkownika został ustawiony w tap() w getUserInfo()
+        },
+        error: (error) => {
+          // Tylko dla błędów 401/403 wyczyść stan - token jest nieważny
+          if (error.status === 401 || error.status === 403) {
+            this.currentUser.set(null);
+            this.isLogged.set(false);
+          }
+          // Dla innych błędów (np. sieciowych) nie wyczyść stanu - token może być nadal ważny
+        }
+      });
     } else {
       this.currentUser.set(null);
       this.isLogged.set(false);
@@ -99,6 +132,58 @@ export class AuthService {
       oldPassword,
       newPassword
     });
+  }
+
+  // Metoda do inicjalizacji autentykacji przy starcie aplikacji
+  initializeAuth(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      // Nie sprawdzaj tokenu z cookies (może być HttpOnly i nie być dostępny dla JS)
+      // Zamiast tego po prostu spróbuj pobrać informacje o użytkowniku
+      // Jeśli cookie jest HttpOnly, zostanie automatycznie wysłane z żądaniem
+      this.getUserInfo().subscribe({
+        next: () => {
+          resolve();
+        },
+        error: (error) => {
+          // Tylko dla błędów 401/403 wyczyść stan - token jest nieważny
+          if (error.status === 401 || error.status === 403) {
+            this.currentUser.set(null);
+            this.isLogged.set(false);
+          }
+          // Dla innych błędów (np. sieciowych) nie wyczyść stanu
+          resolve(); // Nawet jeśli błąd, kontynuuj inicjalizację
+        }
+      });
+    });
+  }
+
+  // Weryfikacja emaila - wywołana przez backend, który przekierowuje na frontend
+  // Frontend tylko obsługuje parametry URL i pokazuje odpowiednie komunikaty
+  verifyEmail(token: string): Observable<HttpResponse<any>> {
+    return this.http.get<HttpResponse<any>>(`${this.apiURL}/verify-email`, {
+      params: { token }
+    }).pipe(
+      tap(() => {
+        // Po weryfikacji odśwież dane użytkownika jeśli jest zalogowany
+        if (this.isLogged()) {
+          this.getUserInfo().subscribe();
+        }
+      }),
+      catchError(error => {
+        throw error;
+      })
+    );
+  }
+
+  // Ponowne wysłanie emaila weryfikacyjnego
+  resendVerificationEmail(email: string): Observable<HttpResponse<any>> {
+    return this.http.post<HttpResponse<any>>(`${this.apiURL}/resend-verification`, null, {
+      params: { email }
+    }).pipe(
+      catchError(error => {
+        throw error;
+      })
+    );
   }
 
 }

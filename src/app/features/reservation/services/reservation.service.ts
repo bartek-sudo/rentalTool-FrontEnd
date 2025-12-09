@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../../environments/enviroment';
 import { Observable } from 'rxjs';
+import { RegulationsAcceptRequest } from '../model/terms.model';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +15,7 @@ export class ReservationService {
   constructor() { }
 
   createReservation(reservationData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/create`, reservationData);
+    return this.http.post(`${this.apiUrl}`, reservationData);
   }
 
   getMyRentals(): Observable<any> {
@@ -36,14 +37,9 @@ export class ReservationService {
     return this.http.put<any>(`${this.apiUrl}/${id}/confirm`, {});
   }
 
-  // Oznacz rezerwację jako opłaconą (jako najemca)
-  payReservation(id: number): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}/pay`, {});
-  }
-
-  // Zakończ rezerwację (jako najemca)
-  finishReservation(id: number): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${id}/finish`, {});
+  // Zaakceptuj regulamin rezerwacji (jako najemca)
+  acceptRegulations(id: number, request: RegulationsAcceptRequest): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/${id}/accept-regulations`, request);
   }
 
   // Anuluj rezerwację (jako najemca)

@@ -6,6 +6,7 @@ import { Tool } from '../models/tool.model';
 import { DailyAvailability } from '../models/daily-availability.model';
 import { ToolApiResponse } from '../models/tool-api-response.model';
 import { ToolUpdateRequest } from '../models/tool-update-request.model';
+import { ToolCreateRequest } from '../models/tool-create-request.model';
 
 export interface ApiResponse<T> {
   timeStamp: string;
@@ -35,20 +36,24 @@ export class ToolService {
     );
   }
 
-  createTool(toolData: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/create`, toolData);
+  createTool(toolData: ToolCreateRequest): Observable<ApiResponse<{ Tool: Tool }>> {
+    return this.http.post<ApiResponse<{ Tool: Tool }>>(`${this.apiUrl}`, toolData);
   }
 
   updateTool(toolId: number, toolData: ToolUpdateRequest): Observable<ApiResponse<{ Tool: Tool }>> {
     return this.http.put<ApiResponse<{ Tool: Tool }>>(`${this.apiUrl}/${toolId}`, toolData);
   }
 
-  deactivateTool(toolId: number): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${toolId}/deactivate`, {});
+  updateToolTerms(toolId: number, termsId: number | null): Observable<ApiResponse<{ Tool: Tool }>> {
+    return this.http.put<ApiResponse<{ Tool: Tool }>>(`${this.apiUrl}/${toolId}/terms`, { termsId });
   }
 
-  activateTool(toolId: number): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/${toolId}/activate`, {});
+  setToolStatus(toolId: number, active: boolean): Observable<ApiResponse<{ Tool: Tool }>> {
+    return this.http.patch<ApiResponse<{ Tool: Tool }>>(
+      `${this.apiUrl}/${toolId}/status`,
+      {},
+      { params: { active: active.toString() } }
+    );
   }
 
   getToolImages(toolId: number): Observable<any> {
@@ -78,7 +83,11 @@ setMainImage(toolId: number, imageId: number): Observable<any> {
     page: number = 0,
     size: number = 10,
     sortBy: string = 'id',
-    sortDirection: string = 'asc'
+    sortDirection: string = 'asc',
+    category?: string,
+    latitude?: number,
+    longitude?: number,
+    radius?: number | null
   ): Observable<ToolApiResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -88,6 +97,21 @@ setMainImage(toolId: number, imageId: number): Observable<any> {
 
     if (searchTerm) {
       params = params.set('search', searchTerm);
+    }
+
+    if (category) {
+      params = params.set('category', category);
+    }
+
+    // Parametry geolokalizacji (opcjonalne)
+    if (latitude !== undefined && longitude !== undefined) {
+      params = params.set('latitude', latitude.toString());
+      params = params.set('longitude', longitude.toString());
+
+      // radius może być null (∞) lub liczbą - jeśli null, nie dodawaj parametru wcale
+      if (radius !== undefined && radius !== null) {
+        params = params.set('radius', radius.toString());
+      }
     }
 
     return this.http.get<ToolApiResponse>(`${this.apiUrl}/search`, { params });

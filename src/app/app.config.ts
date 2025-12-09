@@ -1,10 +1,15 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, APP_INITIALIZER, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-
 import { routes } from './app.routes';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { AuthService } from './core/services/auth.service';
 // import { CookieService } from 'ngx-cookie-service';
+
+// Funkcja inicjalizująca stan autentykacji przed startem aplikacji
+function initializeAuth(authService: AuthService): () => Promise<void> {
+  return () => authService.initializeAuth();
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -14,6 +19,12 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([authInterceptor]),
       withFetch()
     ),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initializeAuth,
+      deps: [AuthService],
+      multi: true
+    },
     // CookieService
   ],
 };

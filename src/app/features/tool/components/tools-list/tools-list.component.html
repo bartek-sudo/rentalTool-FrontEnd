@@ -4,27 +4,97 @@
   <div class="mb-8">
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-        {{searchTerm ? 'Wyniki wyszukiwania' : 'Wszystkie narzędzia'}}
+        {{searchTerm ? 'Wyniki wyszukiwania' : (isGeolocationEnabled ? 'Narzędzia w okolicy' : 'Wszystkie narzędzia')}}
       </h1>
-      <div class="flex items-center justify-start sm:justify-end">
-        <label for="sort-select" class="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-          Sortuj:
-        </label>
-        <select id="sort-select" [(ngModel)]="selectedSort" (change)="updateSort()"
-          class="min-w-[180px] p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-          <option value="newest">Najnowsze</option>
-          <option value="oldest">Najstarsze</option>
-          <option value="name_asc">Nazwa (A-Z)</option>
-          <option value="name_desc">Nazwa (Z-A)</option>
-        </select>
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-2">
+        <!-- Przycisk geolokalizacji -->
+        <button (click)="toggleGeolocation()" [disabled]="isLoadingLocation"
+          [ngClass]="isGeolocationEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'"
+          class="flex items-center gap-2 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg *ngIf="!isLoadingLocation" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <div *ngIf="isLoadingLocation" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+          {{isLoadingLocation ? 'Pobieranie lokalizacji...' : (isGeolocationEnabled ? 'Wyłącz lokalizację' : 'Włącz lokalizację')}}
+        </button>
+        <!-- Suwak promienia (tylko gdy geolokalizacja włączona) -->
+        <div *ngIf="isGeolocationEnabled" class="flex items-center">
+          <label for="radius-select" class="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Promień:
+          </label>
+          <select id="radius-select" [(ngModel)]="selectedRadius" (change)="updateRadius()"
+            class="min-w-[140px] p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <option *ngFor="let option of radiusOptions" [ngValue]="option.value">{{option.label}}</option>
+          </select>
+        </div>
+        <!-- Filtrowanie po kategorii -->
+        <div class="flex items-center">
+          <label for="category-select" class="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Kategoria:
+          </label>
+          <select id="category-select" [(ngModel)]="selectedCategory" (change)="updateCategory()"
+            class="min-w-[200px] p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <option *ngFor="let category of categories" [value]="category.value">{{category.label}}</option>
+          </select>
+        </div>
+        <!-- Sortowanie -->
+        <div class="flex items-center">
+          <label for="sort-select" class="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Sortuj:
+          </label>
+          <select id="sort-select" [(ngModel)]="selectedSort" (change)="updateSort()"
+            class="min-w-[180px] p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <option value="newest">Najnowsze</option>
+            <option value="oldest">Najstarsze</option>
+            <option value="name_asc">Nazwa (A-Z)</option>
+            <option value="name_desc">Nazwa (Z-A)</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Informacja o wyszukiwaniu -->
-  <div *ngIf="searchTerm" class="mb-6">
+  <!-- Error geolokalizacji -->
+  <div *ngIf="geolocationError" class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800" role="alert">
+    <div class="flex items-start gap-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 flex-shrink-0 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <div class="flex-1">
+        <h3 class="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">Mapa z narzędziami w okolicy</h3>
+        <p class="text-sm text-blue-800 dark:text-blue-300 whitespace-pre-line">{{geolocationError}}</p>
+        <button (click)="getUserLocation()"
+          class="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Włącz lokalizację
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mapa (tylko gdy geolokalizacja włączona) -->
+  <div *ngIf="isGeolocationEnabled" class="mb-8 -mx-4 sm:mx-0">
+    <div id="map" class="shadow-lg sm:rounded-lg"></div>
+  </div>
+
+  <!-- Informacja o wyszukiwaniu i filtrowaniu -->
+  <div *ngIf="searchTerm || selectedCategory || isGeolocationEnabled" class="mb-6">
     <p class="text-gray-600 dark:text-gray-400">
-      Szukasz: <strong>"{{searchTerm}}"</strong>
+      <span *ngIf="isGeolocationEnabled">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Promień: <strong>{{selectedRadius ? selectedRadius + ' km' : 'Wszystkie'}}</strong>
+      </span>
+      <span *ngIf="isGeolocationEnabled && (searchTerm || selectedCategory)"> | </span>
+      <span *ngIf="searchTerm">Szukasz: <strong>"{{searchTerm}}"</strong></span>
+      <span *ngIf="searchTerm && selectedCategory"> | </span>
+      <span *ngIf="selectedCategory">Kategoria: <strong>{{getCategoryLabel(selectedCategory)}}</strong></span>
       <span *ngIf="totalItems > 0"> - znaleziono {{totalItems}} wyników</span>
     </p>
   </div>
@@ -52,12 +122,23 @@
 
       <!-- Reszta zawartości karty -->
       <div class="p-6">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{tool.name}}</h2>
+        <div class="flex justify-between items-start mb-2">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{tool.name}}</h2>
+          <!-- Badge z odległością -->
+          <span *ngIf="isGeolocationEnabled && tool.distance !== null && tool.distance !== undefined"
+            class="ml-2 flex items-center gap-1 bg-green-100 text-green-800 text-xs font-medium px-2.5 py-1 rounded dark:bg-green-900 dark:text-green-300 whitespace-nowrap">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {{tool.distance.toFixed(1)}} km
+          </span>
+        </div>
         <p class="text-gray-600 dark:text-gray-300 mb-4">{{tool.description}}</p>
-        <div class="flex justify-between items-center">
-          <span class="text-lg font-bold text-blue-600">{{tool.pricePerDay | currency:'PLN'}}/dzień</span>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <span class="text-lg font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">{{tool.pricePerDay | currency:'PLN'}}/dzień</span>
           <a [routerLink]="['/tool', tool.id]"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+            class="w-full sm:w-auto text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors whitespace-nowrap">
             Zobacz szczegóły
           </a>
         </div>

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { Reservation, ReservationStatus } from '../../../reservation/model/reservation.model';
+import { Reservation, ReservationStatus, normalizeReservationStatus } from '../../../reservation/model/reservation.model';
 import { ReservationService } from '../../../reservation/services/reservation.service';
 import { UserService } from '../../../user/services/user.service';
 import { ToolService } from '../../../tool/services/tool.service';
@@ -65,6 +65,10 @@ export class ReservationManagementComponent implements OnInit {
     this.reservationService.getAllReservations(this.currentPage, this.pageSize).subscribe({
       next: (response) => {
         this.reservations = response.data.reservations;
+        // Normalizuj statusy - zamień stare statusy PAID/FINISHED na nowe
+        this.reservations.forEach(reservation => {
+          reservation.status = normalizeReservationStatus(reservation.status);
+        });
         this.totalPages = response.data.totalPages;
         this.totalItems = response.data.totalItems;
         this.currentPage = response.data.currentPage;

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { Reservation, ReservationStatus } from '../../model/reservation.model';
+import { Router, RouterModule } from '@angular/router';
+import { Reservation, ReservationStatus, normalizeReservationStatus } from '../../model/reservation.model';
 import { ToolService } from '../../../tool/services/tool.service';
 import { ReservationService } from '../../services/reservation.service';
 import { UserService } from '../../../user/services/user.service';
@@ -23,8 +23,7 @@ export class MyRentalsComponent {
     { value: 'all', label: 'Wszystkie' },
     { value: 'PENDING', label: 'Oczekujące' },
     { value: 'CONFIRMED', label: 'Potwierdzone' },
-    { value: 'PAID', label: 'Opłacone' },
-    { value: 'FINISHED', label: 'Zakończone' },
+    { value: 'REGULATIONS_ACCEPTED', label: 'Regulamin zaakceptowany' },
     { value: 'CANCELED', label: 'Anulowane' }
   ];
 
@@ -33,7 +32,8 @@ export class MyRentalsComponent {
   constructor(
     private reservationService: ReservationService,
     private toolService: ToolService,
-    private userService: UserService
+    private userService: UserService,
+    private router: Router
   ) { }
 
   ngOnInit(): void {
@@ -47,6 +47,10 @@ export class MyRentalsComponent {
     this.reservationService.getMyRentals().subscribe({
       next: (response) => {
         this.rentals = response.data.rentals;
+        // Normalizuj statusy - zamień stare statusy PAID/FINISHED na nowe
+        this.rentals.forEach(rental => {
+          rental.status = normalizeReservationStatus(rental.status);
+        });
 
         // Pobierz informacje o narzędziach i właścicielach
         this.rentals.forEach(rental => {
@@ -96,65 +100,11 @@ export class MyRentalsComponent {
     this.activeStatusFilter = status;
   }
 
-  payReservation(reservationId: number): void {
-  this.isLoading = true;
-
-  this.reservationService.payReservation(reservationId).subscribe({
-    next: (response) => {
-      const index = this.rentals.findIndex(r => r.id === reservationId);
-
-      if (index !== -1) {
-        // Zachowaj referencje przed aktualizacją
-        const toolRef = this.rentals[index].tool;
-        const ownerRef = this.rentals[index].owner;
-
-        // Aktualizuj rezerwację
-        this.rentals[index] = response.data.reservation;
-
-        // Przywróć referencje
-        this.rentals[index].tool = toolRef;
-        this.rentals[index].owner = ownerRef;
-      }
-
-      this.isLoading = false;
-    },
-    error: (error) => {
-      console.error('Błąd podczas oznaczania rezerwacji jako opłaconej:', error);
-      this.errorMessage = 'Nie udało się opłacić rezerwacji. Spróbuj ponownie.';
-      this.isLoading = false;
-    }
-  });
-}
-
-finishReservation(reservationId: number): void {
-  this.isLoading = true;
-
-  this.reservationService.finishReservation(reservationId).subscribe({
-    next: (response) => {
-      const index = this.rentals.findIndex(r => r.id === reservationId);
-
-      if (index !== -1) {
-        // Zachowaj referencje przed aktualizacją
-        const toolRef = this.rentals[index].tool;
-        const ownerRef = this.rentals[index].owner;
-
-        // Aktualizuj rezerwację
-        this.rentals[index] = response.data.reservation;
-
-        // Przywróć referencje
-        this.rentals[index].tool = toolRef;
-        this.rentals[index].owner = ownerRef;
-      }
-
-      this.isLoading = false;
-    },
-    error: (error) => {
-      console.error('Błąd podczas kończenia rezerwacji:', error);
-      this.errorMessage = 'Nie udało się zakończyć rezerwacji. Spróbuj ponownie.';
-      this.isLoading = false;
-    }
-  });
-}
+  // Metoda do otwarcia modala akceptacji regulaminu
+  openAcceptRegulationsModal(reservationId: number): void {
+    // Przekieruj do komponentu akceptacji regulaminu
+    this.router.navigate(['/accept-regulations', reservationId]);
+  }
 
 cancelReservation(reservationId: number): void {
   if (!confirm('Czy na pewno chcesz anulować tę rezerwację?')) {
@@ -174,6 +124,8 @@ cancelReservation(reservationId: number): void {
 
         // Aktualizuj rezerwację
         this.rentals[index] = response.data.reservation;
+        // Normalizuj status - zamień stare statusy PAID/FINISHED na nowe
+        this.rentals[index].status = normalizeReservationStatus(this.rentals[index].status);
 
         // Przywróć referencje
         this.rentals[index].tool = toolRef;
@@ -216,8 +168,7 @@ cancelReservation(reservationId: number): void {
     switch (status) {
       case ReservationStatus.PENDING: return 'Oczekująca';
       case ReservationStatus.CONFIRMED: return 'Potwierdzona';
-      case ReservationStatus.PAID: return 'Opłacona';
-      case ReservationStatus.FINISHED: return 'Zakończona';
+      case ReservationStatus.REGULATIONS_ACCEPTED: return 'Regulamin zaakceptowany';
       case ReservationStatus.CANCELED: return 'Anulowana';
       default: return status;
     }
@@ -228,8 +179,7 @@ cancelReservation(reservationId: number): void {
     switch (status) {
       case ReservationStatus.PENDING: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
       case ReservationStatus.CONFIRMED: return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-      case ReservationStatus.PAID: return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-      case ReservationStatus.FINISHED: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+      case ReservationStatus.REGULATIONS_ACCEPTED: return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
       case ReservationStatus.CANCELED: return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }

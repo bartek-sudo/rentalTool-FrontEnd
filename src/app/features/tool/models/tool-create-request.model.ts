@@ -6,4 +6,5 @@ export interface ToolCreateRequest {
   address: string;
   latitude?: number;
   longitude?: number;
+  termsId?: number | null;
 }

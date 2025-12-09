@@ -6,6 +6,8 @@ import { CommonModule } from '@angular/common';
 import { Category } from '../../models/category.model';
 import { environment } from '../../../../../environments/enviroment';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { TermsService } from '../../../reservation/services/terms.service';
+import { TermsDto } from '../../../reservation/model/terms.model';
 
 // Definicje interfejsów dla Google Maps
 interface GoogleMapPosition {
@@ -70,6 +72,13 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
   // Kategorie zgodne z backendem
   categories = Object.values(Category);
 
+  // Regulaminy
+  terms: TermsDto[] = [];
+  filteredTerms: TermsDto[] = [];
+  selectedTermDetails: TermsDto | null = null;
+  termsLoading: boolean = false;
+  termsError: string = '';
+
   // Zmienne dla zdjęć
   selectedImages: ImagePreview[] = [];
   maxImages: number = 10;
@@ -87,6 +96,7 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
   constructor(
     private fb: FormBuilder,
     private toolService: ToolService,
+    private termsService: TermsService,
     private router: Router,
     private renderer: Renderer2
   ) {
@@ -97,13 +107,23 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
       pricePerDay: [null, [Validators.required, Validators.min(1)]],
       address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
       latitude: [null, Validators.required],
-      longitude: [null, Validators.required]
+      longitude: [null, Validators.required],
+      termsId: [1, Validators.required] // Domyślnie regulamin ogólny, wymagane pole
     });
   }
 
   ngOnInit(): void {
     // Dodanie skryptu Google Maps do strony
     this.loadGoogleMapsScript();
+    this.loadTerms();
+
+    this.toolForm.get('category')?.valueChanges.subscribe(category => {
+      this.updateFilteredTerms(category);
+    });
+
+    this.toolForm.get('termsId')?.valueChanges.subscribe(termId => {
+      this.updateSelectedTermDetails(termId);
+    });
 
     // Nasłuchiwanie na zmiany w polu adresu
     this.toolForm.get('address')?.valueChanges
@@ -123,6 +143,63 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     // Mapa zostanie załadowana po załadowaniu skryptu Google Maps
+  }
+
+  private loadTerms(): void {
+    this.termsLoading = true;
+    this.termsService.getAllTerms().subscribe({
+      next: (response) => {
+        this.terms = response.data?.terms || [];
+        this.updateFilteredTerms(this.toolForm.get('category')?.value || null);
+        const currentTermId = this.toolForm.get('termsId')?.value;
+        if (currentTermId) {
+          this.updateSelectedTermDetails(currentTermId);
+        }
+        this.termsLoading = false;
+      },
+      error: (error) => {
+        console.error('Błąd podczas ładowania regulaminów:', error);
+        this.termsError = 'Nie udało się pobrać listy regulaminów.';
+        this.termsLoading = false;
+      }
+    });
+  }
+
+  private updateFilteredTerms(category: string | null): void {
+    if (!this.terms.length) {
+      this.filteredTerms = [];
+      return;
+    }
+
+    const generalTerms = this.terms.filter(term => !term.category);
+    const categoryTerms = category
+      ? this.terms.filter(term => term.category === category)
+      : [];
+
+    this.filteredTerms = [...categoryTerms, ...generalTerms];
+
+    const currentTermId = this.toolForm.get('termsId')?.value;
+    if (currentTermId && !this.filteredTerms.some(term => term.id === currentTermId)) {
+      this.toolForm.patchValue({ termsId: 1 }); // Ustaw domyślnie regulamin ogólny
+      this.selectedTermDetails = this.terms.find(term => term.id === 1) || null;
+    } else if (currentTermId) {
+      this.updateSelectedTermDetails(currentTermId);
+    }
+  }
+
+  private updateSelectedTermDetails(termId: number | null): void {
+    if (!termId) {
+      this.selectedTermDetails = null;
+      return;
+    }
+    this.selectedTermDetails = this.terms.find(term => term.id === termId) || null;
+  }
+
+  getTermCategoryLabel(category: string | null): string {
+    if (!category) {
+      return 'Regulamin ogólny';
+    }
+    return `Kategoria: ${this.formatCategoryName(category)}`;
   }
 
   private loadGoogleMapsScript(): void {
@@ -514,6 +591,13 @@ setMainImage(index: number): void {
       return;
     }
 
+    // Walidacja: sprawdź czy dodano co najmniej jedno zdjęcie
+    if (this.selectedImages.length === 0) {
+      this.errorMessage = 'Narzędzie musi mieć co najmniej jedno zdjęcie przed przesłaniem do moderacji.';
+      this.isSubmitting = false;
+      return;
+    }
+
     // Najpierw stwórz narzędzie
     this.toolService.createTool(formData).subscribe({
       next: (response) => {
@@ -599,12 +683,23 @@ private uploadImageSequentially(toolId: number, index: number): void {
   get categoryControl() { return this.toolForm.get('category'); }
   get pricePerDayControl() { return this.toolForm.get('pricePerDay'); }
   get addressControl() { return this.toolForm.get('address'); }
+  get termsControl() { return this.toolForm.get('termsId'); }
 
   // Metoda do formatowania nazw kategorii
   formatCategoryName(category: string): string {
-    return category
-      .replace(/_/g, ' ')
-      .toLowerCase()
-      .replace(/\b\w/g, char => char.toUpperCase());
+    const categoryLabels: { [key: string]: string } = {
+      'GARDENING': 'Ogród',
+      'CONSTRUCTION': 'Budowa',
+      'ELECTRIC': 'Elektryka',
+      'PLUMBING': 'Hydraulika',
+      'AUTOMOTIVE': 'Motoryzacja',
+      'PAINTING': 'Malowanie',
+      'CLEANING': 'Sprzątanie',
+      'WOODWORKING': 'Stolarstwo',
+      'METALWORKING': 'Obróbka metalu',
+      'OUTDOOR': 'Sprzęt na zewnątrz',
+      'OTHER': 'Inne'
+    };
+    return categoryLabels[category] || category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
   }
 }

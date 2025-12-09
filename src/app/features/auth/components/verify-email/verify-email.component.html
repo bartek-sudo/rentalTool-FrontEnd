@@ -1,0 +1,153 @@
+<section class="bg-gray-50 dark:bg-gray-900">
+  <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:min-h-screen lg:py-0">
+    <a routerLink="/" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
+      <img class="w-8 h-8 mr-2" src="https://flowbite.s3.amazonaws.com/logo.svg" alt="logo">
+      RentalTool
+    </a>
+    <div
+      class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+      <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+        <!-- Loading state -->
+        @if (status === 'loading') {
+        <div class="text-center">
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
+          <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-2">
+            Weryfikowanie emaila...
+          </h1>
+          <p class="text-gray-500 dark:text-gray-400">{{ message }}</p>
+        </div>
+        }
+
+        <!-- Success state -->
+        @if (status === 'success') {
+        <div class="text-center">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 mb-4">
+            <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </div>
+          <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-2">
+            Email zweryfikowany!
+          </h1>
+          <p class="text-gray-500 dark:text-gray-400 mb-4">{{ message }}</p>
+          <p class="text-sm text-gray-400 dark:text-gray-500 mb-6">Przekierowywanie do strony logowania...</p>
+          <a routerLink="/login" queryParamsHandling="merge"
+            class="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+            Przejdź do logowania
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+        }
+
+        <!-- Error state -->
+        @if (status === 'error') {
+        <div class="text-center">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 mb-4">
+            <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </div>
+          <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-2">
+            Błąd weryfikacji
+          </h1>
+          <p class="text-gray-500 dark:text-gray-400 mb-6">{{ message }}</p>
+
+          <!-- Formularz ponownego wysłania emaila -->
+          <div class="mt-6 text-left">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Wyślij nowy email weryfikacyjny
+            </h2>
+            <form [formGroup]="resendForm" (ngSubmit)="resendVerificationEmail()" class="space-y-4">
+              <div>
+                <label for="resend-email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Adres
+                  email</label>
+                <input type="email" id="resend-email" formControlName="email"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder="twoj@email.com" required>
+                @if (resendForm.get('email')?.invalid && resendForm.get('email')?.touched) {
+                <div class="mt-2 text-sm text-red-600 dark:text-red-500">
+                  Wprowadź prawidłowy adres email.
+                </div>
+                }
+              </div>
+              <button type="submit" [disabled]="resendForm.invalid || isResending"
+                class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-70">
+                {{ isResending ? 'Wysyłanie...' : 'Wyślij email weryfikacyjny' }}
+              </button>
+              @if (resendSuccess) {
+              <div class="p-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400"
+                role="alert">
+                {{ message }}
+              </div>
+              }
+              @if (resendError) {
+              <div class="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+                {{ resendError }}
+              </div>
+              }
+            </form>
+          </div>
+        </div>
+        }
+
+        <!-- Pending state - brak parametrów -->
+        @if (status === 'pending') {
+        <div class="text-center">
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
+            <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+              </path>
+            </svg>
+          </div>
+          <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white mb-2">
+            Wyślij email weryfikacyjny
+          </h1>
+          <p class="text-gray-500 dark:text-gray-400 mb-6">{{ message }}</p>
+
+          <!-- Formularz ponownego wysłania emaila -->
+          <form [formGroup]="resendForm" (ngSubmit)="resendVerificationEmail()" class="space-y-4">
+            <div>
+              <label for="resend-email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Adres
+                email</label>
+              <input type="email" id="resend-email" formControlName="email"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="twoj@email.com" required>
+              @if (resendForm.get('email')?.invalid && resendForm.get('email')?.touched) {
+              <div class="mt-2 text-sm text-red-600 dark:text-red-500">
+                Wprowadź prawidłowy adres email.
+              </div>
+              }
+            </div>
+            <button type="submit" [disabled]="resendForm.invalid || isResending"
+              class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-70">
+              {{ isResending ? 'Wysyłanie...' : 'Wyślij email weryfikacyjny' }}
+            </button>
+            @if (resendSuccess) {
+            <div class="p-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400"
+              role="alert">
+              {{ message }}
+            </div>
+            }
+            @if (resendError) {
+            <div class="p-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+              {{ resendError }}
+            </div>
+            }
+          </form>
+
+          <p class="text-sm font-light text-gray-500 dark:text-gray-400 mt-4">
+            Masz już konto? <a routerLink="/login"
+              class="font-medium text-blue-600 hover:underline dark:text-blue-500">Zaloguj się</a>
+          </p>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+</section>

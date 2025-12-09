@@ -13,6 +13,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/components/login/login.component').then(m => m.LoginComponent)
   },
   {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/components/verify-email/verify-email.component').then(m => m.VerifyEmailComponent)
+  },
+  {
     path: '',
     redirectTo: 'tools',
     pathMatch: 'full'
@@ -43,6 +47,11 @@ export const routes: Routes = [
   {
     path: 'my-rentals',
     loadComponent: () => import('./features/reservation/components/my-rentals/my-rentals.component').then(m => m.MyRentalsComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'accept-regulations/:id',
+    loadComponent: () => import('./features/reservation/components/accept-regulations/accept-regulations.component').then(m => m.AcceptRegulationsComponent),
     canActivate: [authGuard]
   },
   {

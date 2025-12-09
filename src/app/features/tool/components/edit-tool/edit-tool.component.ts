@@ -6,6 +6,8 @@ import { environment } from '../../../../../environments/enviroment';
 import { Category } from '../../models/category.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
+import { TermsService } from '../../../reservation/services/terms.service';
+import { TermsDto } from '../../../reservation/model/terms.model';
 
 // Definicje interfejsów dla Google Maps
 interface GoogleMapPosition {
@@ -84,6 +86,13 @@ export class EditToolComponent {
   // Kategorie zgodne z backendem
   categories = Object.values(Category);
 
+  // Regulaminy
+  terms: TermsDto[] = [];
+  filteredTerms: TermsDto[] = [];
+  selectedTermDetails: TermsDto | null = null;
+  termsLoading: boolean = false;
+  termsError: string = '';
+
   // Zmienne dla zdjęć
   existingImages: ToolImage[] = [];
   selectedNewImages: ImagePreview[] = [];
@@ -102,6 +111,7 @@ export class EditToolComponent {
   constructor(
     private fb: FormBuilder,
     private toolService: ToolService,
+    private termsService: TermsService,
     private router: Router,
     private route: ActivatedRoute,
     private renderer: Renderer2
@@ -114,7 +124,8 @@ export class EditToolComponent {
       address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
       latitude: [null, Validators.required],
       longitude: [null, Validators.required],
-      isActive: [true]
+      isActive: [true],
+      termsId: [1, Validators.required] // Domyślnie regulamin ogólny, wymagane pole
     });
   }
 
@@ -128,6 +139,16 @@ export class EditToolComponent {
       } else {
         this.errorMessage = 'Nieprawidłowy identyfikator narzędzia';
       }
+    });
+
+    this.loadTerms();
+
+    this.toolForm.get('category')?.valueChanges.subscribe(category => {
+      this.updateFilteredTerms(category);
+    });
+
+    this.toolForm.get('termsId')?.valueChanges.subscribe(termId => {
+      this.updateSelectedTermDetails(termId);
     });
 
     // Dodanie skryptu Google Maps do strony
@@ -151,6 +172,63 @@ export class EditToolComponent {
 
   ngAfterViewInit(): void {
     // Mapa zostanie załadowana po załadowaniu skryptu Google Maps
+  }
+
+  private loadTerms(): void {
+    this.termsLoading = true;
+    this.termsService.getAllTerms().subscribe({
+      next: (response) => {
+        this.terms = response.data?.terms || [];
+        this.updateFilteredTerms(this.toolForm.get('category')?.value || null);
+        const currentTermId = this.toolForm.get('termsId')?.value;
+        if (currentTermId) {
+          this.updateSelectedTermDetails(currentTermId);
+        }
+        this.termsLoading = false;
+      },
+      error: (error) => {
+        console.error('Błąd podczas ładowania regulaminów:', error);
+        this.termsError = 'Nie udało się pobrać listy regulaminów.';
+        this.termsLoading = false;
+      }
+    });
+  }
+
+  private updateFilteredTerms(category: string | null): void {
+    if (!this.terms.length) {
+      this.filteredTerms = [];
+      return;
+    }
+
+    const generalTerms = this.terms.filter(term => !term.category);
+    const categoryTerms = category
+      ? this.terms.filter(term => term.category === category)
+      : [];
+
+    this.filteredTerms = [...categoryTerms, ...generalTerms];
+
+    const currentTermId = this.toolForm.get('termsId')?.value;
+    if (currentTermId && !this.filteredTerms.some(term => term.id === currentTermId)) {
+      this.toolForm.patchValue({ termsId: 1 }); // Ustaw domyślnie regulamin ogólny
+      this.selectedTermDetails = this.terms.find(term => term.id === 1) || null;
+    } else if (currentTermId) {
+      this.updateSelectedTermDetails(currentTermId);
+    }
+  }
+
+  private updateSelectedTermDetails(termId: number | null): void {
+    if (!termId) {
+      this.selectedTermDetails = null;
+      return;
+    }
+    this.selectedTermDetails = this.terms.find(term => term.id === termId) || null;
+  }
+
+  getTermCategoryLabel(category: string | null): string {
+    if (!category) {
+      return 'Regulamin ogólny';
+    }
+    return `Kategoria: ${this.formatCategoryName(category)}`;
   }
 
   private loadToolData(): void {
@@ -192,7 +270,8 @@ export class EditToolComponent {
         address: this.currentTool.address,
         latitude: this.currentTool.latitude,
         longitude: this.currentTool.longitude,
-        isActive: this.currentTool.isActive
+        isActive: this.currentTool.isActive,
+        termsId: this.currentTool.termsId ?? 1 // Jeśli brak termsId, ustaw domyślnie 1 (regulamin ogólny)
       });
 
       // Zaktualizuj mapę jeśli jest już załadowana
@@ -672,6 +751,13 @@ export class EditToolComponent {
       return;
     }
 
+    // Walidacja: sprawdź czy są istniejące lub nowe zdjęcia
+    if (this.existingImages.length === 0 && this.selectedNewImages.length === 0) {
+      this.errorMessage = 'Narzędzie musi mieć co najmniej jedno zdjęcie przed przesłaniem do moderacji.';
+      this.isSubmitting = false;
+      return;
+    }
+
     this.toolService.updateTool(this.toolId, formData).subscribe({
       next: (response) => {
         // Po zaktualizowaniu danych narzędzia, prześlij nowe zdjęcia
@@ -707,17 +793,16 @@ export class EditToolComponent {
       this.isSubmitting = true;
       this.errorMessage = '';
 
-      const operation = this.currentTool?.isActive
-        ? this.toolService.deactivateTool(this.toolId)
-        : this.toolService.activateTool(this.toolId);
+      const newActiveStatus = !this.currentTool?.isActive;
+      const operation = this.toolService.setToolStatus(this.toolId, newActiveStatus);
 
       operation.subscribe({
         next: (response) => {
           this.isSubmitting = false;
-          this.successMessage = `Narzędzie zostało pomyślnie ${this.currentTool?.isActive ? 'dezaktywowane' : 'aktywowane'}!`;
+          this.successMessage = `Narzędzie zostało pomyślnie ${newActiveStatus ? 'aktywowane' : 'dezaktywowane'}!`;
 
           // Zaktualizuj dane narzędzia
-          this.currentTool = response;
+          this.currentTool = response.data.Tool;
 
           // Opcjonalnie: przekieruj do listy narzędzi po pewnym czasie
           setTimeout(() => {
@@ -749,12 +834,23 @@ export class EditToolComponent {
   get categoryControl() { return this.toolForm.get('category'); }
   get pricePerDayControl() { return this.toolForm.get('pricePerDay'); }
   get addressControl() { return this.toolForm.get('address'); }
+  get termsControl() { return this.toolForm.get('termsId'); }
 
   // Metoda do formatowania nazw kategorii
   formatCategoryName(category: string): string {
-    return category
-      .replace(/_/g, ' ')
-      .toLowerCase()
-      .replace(/\b\w/g, char => char.toUpperCase());
+    const categoryLabels: { [key: string]: string } = {
+      'GARDENING': 'Ogród',
+      'CONSTRUCTION': 'Budowa',
+      'ELECTRIC': 'Elektryka',
+      'PLUMBING': 'Hydraulika',
+      'AUTOMOTIVE': 'Motoryzacja',
+      'PAINTING': 'Malowanie',
+      'CLEANING': 'Sprzątanie',
+      'WOODWORKING': 'Stolarstwo',
+      'METALWORKING': 'Obróbka metalu',
+      'OUTDOOR': 'Sprzęt na zewnątrz',
+      'OTHER': 'Inne'
+    };
+    return categoryLabels[category] || category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
   }
 }

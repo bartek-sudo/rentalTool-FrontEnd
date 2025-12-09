@@ -47,14 +47,54 @@
                     {{ isLoading ? 'Signing in...' : 'Sign in' }}
                   </button>
 
-                  @if (errorMessage) {
+                  @if (verificationSuccess) {
+                    <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400" role="alert">
+                      <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                          <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
+                        </div>
+                        <div class="ml-3">
+                          <p class="font-medium">Email został zweryfikowany!</p>
+                          <p class="mt-1">Możesz się teraz zalogować.</p>
+                        </div>
+                      </div>
+                    </div>
+                  }
+
+                  @if (emailNotVerified) {
+                    <div class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-400" role="alert">
+                      <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                          <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                          </svg>
+                        </div>
+                        <div class="ml-3 flex-1">
+                          <p class="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
+                            {{ errorMessage }}
+                          </p>
+                          <button type="button" (click)="goToVerificationPage()"
+                            class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-yellow-800 bg-yellow-100 border border-transparent rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-800">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            Wyślij ponownie email weryfikacyjny
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  }
+
+                  @if (errorMessage && !emailNotVerified) {
                     <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
                       {{ errorMessage }}
                     </div>
                   }
 
                   <p class="text-sm font-light text-gray-500 dark:text-gray-400">
-                      Don’t have an account yet? <a routerLink="/register" class="font-medium text-primary-600 hover:underline dark:text-primary-500">Sign up</a>
+                      Nie masz jeszcze konta? <a routerLink="/register" class="font-medium text-primary-600 hover:underline dark:text-primary-500">Zarejestruj się</a>
                   </p>
               </form>
           </div>

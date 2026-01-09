@@ -29,6 +29,21 @@ export class TermsService {
   getTermsByCategory(category: string): Observable<HttpResponse<{ terms: TermsDto[] }>> {
     return this.http.get<HttpResponse<{ terms: TermsDto[] }>>(`${this.apiUrl}/category/${category}`);
   }
+
+  // ADMIN - Utwórz nowy regulamin
+  createTerm(termData: Omit<TermsDto, 'id'>): Observable<HttpResponse<{ terms: TermsDto }>> {
+    return this.http.post<HttpResponse<{ terms: TermsDto }>>(`${this.apiUrl}`, termData);
+  }
+
+  // ADMIN - Aktualizuj regulamin
+  updateTerm(id: number, termData: Omit<TermsDto, 'id'>): Observable<HttpResponse<{ terms: TermsDto }>> {
+    return this.http.put<HttpResponse<{ terms: TermsDto }>>(`${this.apiUrl}/${id}`, termData);
+  }
+
+  // ADMIN - Usuń regulamin
+  deleteTerm(id: number): Observable<HttpResponse<void>> {
+    return this.http.delete<HttpResponse<void>>(`${this.apiUrl}/${id}`);
+  }
 }
 
 

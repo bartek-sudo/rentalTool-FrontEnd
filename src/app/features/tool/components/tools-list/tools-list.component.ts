@@ -49,7 +49,7 @@ export class ToolsListComponent implements OnInit, OnDestroy {
   pageSize = 10;
   totalPages = 0;
   totalItems = 0;
-  selectedSort = 'newest';
+  selectedSort = 'created_desc'; // Domyślnie najnowsze (utworzone ostatnio)
   Math = Math;
 
   // Parametry geolokalizacji
@@ -199,6 +199,9 @@ export class ToolsListComponent implements OnInit, OnDestroy {
           this.isLoadingLocation = false;
           this.currentPage = 0; // Reset do pierwszej strony
 
+          // Zmień domyślne sortowanie na odległość gdy geolokalizacja jest włączona
+          this.selectedSort = 'distance_asc';
+
           // Inicjalizuj mapę po małym opóźnieniu (aby DOM był gotowy)
           setTimeout(() => {
             this.initMap();
@@ -260,6 +263,11 @@ export class ToolsListComponent implements OnInit, OnDestroy {
       this.isGeolocationEnabled = false;
       this.currentPage = 0;
 
+      // Przywróć domyślne sortowanie (najnowsze) gdy geolokalizacja jest wyłączona
+      if (this.selectedSort === 'distance_asc' || this.selectedSort === 'distance_desc') {
+        this.selectedSort = 'created_desc';
+      }
+
       // Usuń mapę Google Maps
       if (this.map) {
         this.toolMarkers.forEach(marker => marker.setMap(null));
@@ -319,15 +327,23 @@ export class ToolsListComponent implements OnInit, OnDestroy {
 
   getSortParams(): [string, string] {
     switch (this.selectedSort) {
-      case 'oldest':
-        return ['id', 'asc'];
       case 'name_asc':
         return ['name', 'asc'];
       case 'name_desc':
         return ['name', 'desc'];
-      case 'newest':
+      case 'price_asc':
+        return ['pricePerDay', 'asc'];
+      case 'price_desc':
+        return ['pricePerDay', 'desc'];
+      case 'distance_asc':
+        return ['distance', 'asc'];
+      case 'distance_desc':
+        return ['distance', 'desc'];
+      case 'created_asc':
+        return ['createdAt', 'asc'];
+      case 'created_desc':
       default:
-        return ['id', 'desc'];
+        return ['createdAt', 'desc'];
     }
   }
 

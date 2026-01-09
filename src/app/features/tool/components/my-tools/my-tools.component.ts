@@ -23,12 +23,14 @@ export class MyToolsComponent {
   totalPages: number = 0;
 
   // Sortowanie
-  selectedSort: string = 'newest';
+  selectedSort: string = 'created_desc';
   sortOptions = [
-    { value: 'newest', label: 'Najnowsze' },
-    { value: 'oldest', label: 'Najstarsze' },
+    { value: 'created_desc', label: 'Najnowsze' },
+    { value: 'created_asc', label: 'Najstarsze' },
     { value: 'name_asc', label: 'Nazwa (A-Z)' },
-    { value: 'name_desc', label: 'Nazwa (Z-A)' }
+    { value: 'name_desc', label: 'Nazwa (Z-A)' },
+    { value: 'price_asc', label: 'Cena (rosnąco)' },
+    { value: 'price_desc', label: 'Cena (malejąco)' }
   ];
 
   constructor(private toolService: ToolService) { }
@@ -41,15 +43,15 @@ export class MyToolsComponent {
     this.isLoading = true;
 
     // Mapowanie opcji sortowania na parametry API
-    let sortBy = 'id';
+    let sortBy = 'createdAt';
     let sortDirection = 'desc';
 
     switch (this.selectedSort) {
-      case 'newest':
+      case 'created_desc':
         sortBy = 'createdAt';
         sortDirection = 'desc';
         break;
-      case 'oldest':
+      case 'created_asc':
         sortBy = 'createdAt';
         sortDirection = 'asc';
         break;
@@ -59,6 +61,14 @@ export class MyToolsComponent {
         break;
       case 'name_desc':
         sortBy = 'name';
+        sortDirection = 'desc';
+        break;
+      case 'price_asc':
+        sortBy = 'pricePerDay';
+        sortDirection = 'asc';
+        break;
+      case 'price_desc':
+        sortBy = 'pricePerDay';
         sortDirection = 'desc';
         break;
     }

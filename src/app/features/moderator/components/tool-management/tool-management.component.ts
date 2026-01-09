@@ -96,12 +96,7 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
   loadTools() {
     this.isLoading = true;
 
-    let url = '';
-    if (this.activeStatusFilter === 'pending') {
-      url = `${environment.apiUrl}/api/v1/moderation/pending?page=${this.currentPage}&size=${this.pageSize}`;
-    } else {
-      url = `${environment.apiUrl}/api/v1/moderation/status/${this.activeStatusFilter}?page=${this.currentPage}&size=${this.pageSize}`;
-    }
+    const url = `${environment.apiUrl}/api/v1/moderation/status/${this.activeStatusFilter}?page=${this.currentPage}&size=${this.pageSize}`;
 
     this.http.get<any>(url)
       .pipe(takeUntil(this.destroy$))
@@ -169,26 +164,10 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
   submitModeration(action: 'approve' | 'reject' | 'remoderation'): void {
     if (!this.selectedTool) return;
 
-    if ((action === 'reject' || action === 'remoderation') && !this.moderationComment.trim()) {
+    if (action === 'reject' && !this.moderationComment.trim()) {
       return; // Walidacja już w template
     }
 
-    if (action === 'remoderation') {
-      this.toolService.requireRemoderation(this.selectedTool.id, this.moderationComment).subscribe({
-        next: () => {
-          this.displaySuccessMessage('Narzędzie zostało oznaczone do ponownej moderacji');
-          this.closeModals();
-          this.loadTools();
-        },
-        error: (error) => {
-          console.error('Błąd podczas wymagania ponownej moderacji:', error);
-          this.displayErrorMessage('Błąd podczas wymagania ponownej moderacji');
-        }
-      });
-      return;
-    }
-
-    // Dla akcji approve/reject używam updateModerationStatus
     const status = action === 'approve' ? 'APPROVED' : 'REJECTED';
     this.toolService.updateModerationStatus(this.selectedTool.id, status, this.moderationComment).subscribe({
       next: () => {
@@ -201,13 +180,6 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
         this.displayErrorMessage(`Błąd podczas ${action === 'approve' ? 'zatwierdzania' : 'odrzucania'} narzędzia`);
       }
     });
-  }
-
-  requireRemoderation(tool: Tool): void {
-    this.selectedTool = tool;
-    this.moderationAction = 'remoderation';
-    this.moderationComment = '';
-    this.showModerationModal = true;
   }
 
   showToolDetailsModal(tool: Tool) {

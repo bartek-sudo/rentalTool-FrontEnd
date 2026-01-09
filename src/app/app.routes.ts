@@ -89,6 +89,10 @@ export const routes: Routes = [
       {
         path: 'reservations',
         loadComponent: () => import('./features/moderator/components/reservation-management/reservation-management.component').then(m => m.ReservationManagementComponent)
+      },
+      {
+        path: 'terms',
+        loadComponent: () => import('./features/admin/components/terms-management/terms-management.component').then(m => m.TermsManagementComponent)
       }
     ]
   },

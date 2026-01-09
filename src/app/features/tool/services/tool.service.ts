@@ -148,8 +148,4 @@ setMainImage(toolId: number, imageId: number): Observable<any> {
   updateToolModeration(toolId: number, updateData: any): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/${toolId}/moderation`, updateData);
   }
-
-  requireRemoderation(toolId: number, comment: string): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/api/v1/moderation/${toolId}/require-remoderation`, { comment });
-  }
 }

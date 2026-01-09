@@ -44,11 +44,15 @@
             Sortuj:
           </label>
           <select id="sort-select" [(ngModel)]="selectedSort" (change)="updateSort()"
-            class="min-w-[180px] p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-            <option value="newest">Najnowsze</option>
-            <option value="oldest">Najstarsze</option>
+            class="min-w-[220px] p-2.5 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            <option *ngIf="isGeolocationEnabled" value="distance_asc">Odległość (najbliższe)</option>
+            <option *ngIf="isGeolocationEnabled" value="distance_desc">Odległość (najdalsze)</option>
+            <option value="created_desc">Najnowsze</option>
+            <option value="created_asc">Najstarsze</option>
             <option value="name_asc">Nazwa (A-Z)</option>
             <option value="name_desc">Nazwa (Z-A)</option>
+            <option value="price_asc">Cena (rosnąco)</option>
+            <option value="price_desc">Cena (malejąco)</option>
           </select>
         </div>
       </div>

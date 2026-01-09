@@ -3,7 +3,7 @@
     <!-- Nagłówek -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-        Moje wypożyczenia
+        Moje wynajmy
       </h1>
 
       <!-- Filtry statusu -->
@@ -23,6 +23,11 @@
     <!-- Loading state -->
     <div *ngIf="isLoading" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+
+    <!-- Success message -->
+    <div *ngIf="successMessage" class="p-4 mb-6 text-sm text-green-700 bg-green-100 rounded-lg dark:bg-green-200/10 dark:text-green-400" role="alert">
+      {{ successMessage }}
     </div>
 
     <!-- Error message -->
@@ -71,12 +76,12 @@
 
               <!-- Kontakt - jeśli mamy dodatkowe informacje kontaktowe -->
               <div class="ml-auto">
-                <a *ngIf="rental.owner.email" href="mailto:{{ rental.owner.email }}" class="text-blue-600 dark:text-blue-400 text-sm hover:underline flex items-center">
+                <button *ngIf="rental.owner" (click)="openContactModal(rental.owner)" class="text-blue-600 dark:text-blue-400 text-sm hover:underline flex items-center cursor-pointer">
                   <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
                   Kontakt
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -131,6 +136,68 @@
         <a routerLink="/tools" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-700 dark:hover:bg-blue-800 dark:focus:ring-blue-800">
           Znajdź narzędzie
         </a>
+      </div>
+    </div>
+
+    <!-- Modal kontaktu -->
+    <div *ngIf="showContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-gray-900 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50 flex items-center justify-center" (click)="closeContactModal()">
+      <div class="relative p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800" (click)="$event.stopPropagation()">
+        <!-- Nagłówek modalu -->
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Dane kontaktowe</h3>
+          <button (click)="closeContactModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Dane użytkownika -->
+        <div *ngIf="selectedContactUser" class="space-y-4">
+          <!-- Avatar i nazwa -->
+          <div class="flex items-center mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 text-xl font-semibold mr-4">
+              {{ selectedContactUser.firstName.charAt(0) }}{{ selectedContactUser.lastName.charAt(0) }}
+            </div>
+            <div>
+              <p class="text-xl font-semibold text-gray-900 dark:text-white">{{ selectedContactUser.firstName }} {{ selectedContactUser.lastName }}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400">Właściciel narzędzia</p>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="flex items-start space-x-3">
+            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500 dark:text-gray-400 uppercase">Email</p>
+              <a href="mailto:{{ selectedContactUser.email }}" class="text-blue-600 dark:text-blue-400 hover:underline break-all">
+                {{ selectedContactUser.email }}
+              </a>
+            </div>
+          </div>
+
+          <!-- Telefon -->
+          <div class="flex items-start space-x-3">
+            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+            </svg>
+            <div class="flex-1">
+              <p class="text-xs text-gray-500 dark:text-gray-400 uppercase">Telefon</p>
+              <a href="tel:{{ selectedContactUser.phoneNumber }}" class="text-blue-600 dark:text-blue-400 hover:underline">
+                {{ selectedContactUser.phoneNumber }}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Przycisk zamknij -->
+        <div class="mt-6 flex justify-end">
+          <button (click)="closeContactModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+            Zamknij
+          </button>
+        </div>
       </div>
     </div>
   </div>

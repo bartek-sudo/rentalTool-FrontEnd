@@ -16,6 +16,9 @@ export class MyToolReservationsComponent {
   reservations: Reservation[] = [];
   isLoading: boolean = false;
   errorMessage: string = '';
+  successMessage: string = '';
+  selectedContactUser: any = null; // Przechowuje dane użytkownika do wyświetlenia w modalu
+  showContactModal: boolean = false; // Steruje widocznością modalu
 
   // Dla filtrowania według statusu
   activeStatusFilter: string = 'all';
@@ -42,6 +45,7 @@ export class MyToolReservationsComponent {
   loadReservations(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
     this.reservationService.getMyToolsReservations().subscribe({
       next: (response) => {
@@ -97,8 +101,22 @@ export class MyToolReservationsComponent {
     this.activeStatusFilter = status;
   }
 
+  // Metoda do otwarcia modala kontaktu
+  openContactModal(user: any): void {
+    this.selectedContactUser = user;
+    this.showContactModal = true;
+  }
+
+  // Metoda do zamknięcia modala kontaktu
+  closeContactModal(): void {
+    this.showContactModal = false;
+    this.selectedContactUser = null;
+  }
+
   confirmReservation(reservationId: number): void {
     this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
 
     this.reservationService.confirmReservation(reservationId).subscribe({
       next: (response) => {
@@ -130,6 +148,57 @@ export class MyToolReservationsComponent {
     });
   }
 
+  cancelReservation(reservationId: number): void {
+    if (!confirm('Czy na pewno chcesz anulować tę rezerwację?')) {
+      return;
+    }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.reservationService.cancelReservation(reservationId).subscribe({
+      next: (response) => {
+        const index = this.reservations.findIndex(r => r.id === reservationId);
+
+        if (index !== -1) {
+          // Zachowaj referencje przed aktualizacją
+          const toolRef = this.reservations[index].tool;
+          const renterRef = this.reservations[index].renter;
+
+          // Aktualizuj rezerwację
+          this.reservations[index] = response.data.reservation;
+          // Normalizuj status - zamień stare statusy PAID/FINISHED na nowe
+          this.reservations[index].status = normalizeReservationStatus(this.reservations[index].status);
+
+          // Przywróć referencje
+          this.reservations[index].tool = toolRef;
+          this.reservations[index].renter = renterRef;
+        }
+
+        this.successMessage = 'Rezerwacja została pomyślnie anulowana.';
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Błąd podczas anulowania rezerwacji:', error);
+
+        // Obsługa konkretnych kodów błędów HTTP
+        if (error.status === 400) {
+          this.errorMessage = 'Nie można anulować tej rezerwacji. Rezerwacja nie jest w odpowiednim statusie.';
+        } else if (error.status === 403) {
+          this.errorMessage = 'Nie masz uprawnień do anulowania tej rezerwacji.';
+        } else if (error.status === 404) {
+          this.errorMessage = 'Rezerwacja nie została znaleziona.';
+        } else if (error.error?.message) {
+          this.errorMessage = error.error.message;
+        } else {
+          this.errorMessage = 'Nie udało się anulować rezerwacji. Spróbuj ponownie.';
+        }
+
+        this.isLoading = false;
+      }
+    });
+  }
 
   // Helper do formatowania daty
   formatDate(dateString: string | null | undefined): string {

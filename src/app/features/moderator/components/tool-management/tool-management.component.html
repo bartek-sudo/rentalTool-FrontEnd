@@ -56,8 +56,6 @@
               class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs">Zatwierdź</button>
             <button *ngIf="tool.moderationStatus === 'PENDING' || tool.moderationStatus === 'APPROVED'" (click)="rejectTool(tool)"
               class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">Odrzuć</button>
-            <button *ngIf="isAdmin() && tool.moderationStatus === 'APPROVED'" (click)="requireRemoderation(tool)"
-              class="px-2 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 text-xs">Wymagaj ponownej moderacji</button>
           </td>
         </tr>
       </tbody>
@@ -119,7 +117,7 @@
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-md relative">
       <button (click)="closeModals()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">&times;</button>
       <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">
-        {{ moderationAction === 'approve' ? 'Zatwierdź' : moderationAction === 'reject' ? 'Odrzuć' : 'Wymagaj ponownej moderacji' }} narzędzie
+        {{ moderationAction === 'approve' ? 'Zatwierdź' : 'Odrzuć' }} narzędzie
       </h2>
       <div *ngIf="selectedTool" class="text-gray-900 dark:text-white">
         <p class="mb-4">Narzędzie: <strong>"{{selectedTool.name}}"</strong></p>
@@ -128,21 +126,21 @@
             {{ getStatusLabel(selectedTool.moderationStatus) }}
           </span>
         </p>
-        <label *ngIf="moderationAction === 'reject' || moderationAction === 'remoderation'" for="comment" class="block mb-2 font-medium">
+        <label *ngIf="moderationAction === 'reject'" for="comment" class="block mb-2 font-medium">
           Komentarz (wymagany):
         </label>
-        <textarea *ngIf="moderationAction === 'reject' || moderationAction === 'remoderation'" id="comment" [(ngModel)]="moderationComment" name="comment" rows="3"
+        <textarea *ngIf="moderationAction === 'reject'" id="comment" [(ngModel)]="moderationComment" name="comment" rows="3"
           class="w-full p-2 border border-gray-300 rounded dark:bg-gray-700 dark:text-white dark:border-gray-600"
-          [class.border-red-500]="(moderationAction === 'reject' || moderationAction === 'remoderation') && !moderationComment.trim()"
-          [placeholder]="moderationAction === 'reject' ? 'Dodaj komentarz do odrzucenia...' : 'Dodaj powód wymagania ponownej moderacji...'"></textarea>
-        <p *ngIf="(moderationAction === 'reject' || moderationAction === 'remoderation') && !moderationComment.trim()" class="text-red-500 text-sm mt-1">
+          [class.border-red-500]="moderationAction === 'reject' && !moderationComment.trim()"
+          placeholder="Dodaj komentarz do odrzucenia..."></textarea>
+        <p *ngIf="moderationAction === 'reject' && !moderationComment.trim()" class="text-red-500 text-sm mt-1">
           Komentarz jest wymagany
         </p>
       </div>
       <div class="mt-6 flex justify-end gap-2">
         <button (click)="closeModals()" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600">Anuluj</button>
         <button (click)="submitModeration(moderationAction)" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-          {{ moderationAction === 'approve' ? 'Zatwierdź' : moderationAction === 'reject' ? 'Odrzuć' : 'Wymagaj ponownej moderacji' }}
+          {{ moderationAction === 'approve' ? 'Zatwierdź' : 'Odrzuć' }}
         </button>
       </div>
     </div>

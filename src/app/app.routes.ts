@@ -93,6 +93,10 @@ export const routes: Routes = [
       {
         path: 'terms',
         loadComponent: () => import('./features/admin/components/terms-management/terms-management.component').then(m => m.TermsManagementComponent)
+      },
+      {
+        path: 'categories',
+        loadComponent: () => import('./features/admin/components/category-management/category-management.component').then(m => m.CategoryManagementComponent)
       }
     ]
   },

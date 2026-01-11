@@ -1,0 +1,236 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-8 flex justify-between items-center">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Zarządzanie Kategoriami</h1>
+      <p class="text-gray-600 dark:text-gray-300 mt-2">Przeglądaj i zarządzaj wszystkimi kategoriami narzędzi</p>
+    </div>
+    <button (click)="openCreateForm()"
+            class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+      + Dodaj Kategorię
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  </div>
+
+  <div *ngIf="error" class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error" class="space-y-4">
+    <div *ngFor="let category of categories"
+         class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+      <div class="flex justify-between items-start">
+        <div class="flex-1">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ category.displayName }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded font-mono">
+              {{ category.name }}
+            </span>
+          </p>
+          <p *ngIf="category.description" class="text-sm text-gray-700 dark:text-gray-300 mb-2">
+            {{ category.description }}
+          </p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            ID: {{ category.id }} | Utworzono: {{ formatDate(category.createdAt) }}
+          </p>
+          <div class="mt-2">
+            <span *ngIf="getTermsForCategory(category.id)"
+                  class="inline-block bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded text-xs">
+              ✓ Ma regulamin: {{ getTermsForCategory(category.id)?.title }}
+            </span>
+            <span *ngIf="!getTermsForCategory(category.id)"
+                  class="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded text-xs">
+              ⚠ Brak regulaminu
+            </span>
+          </div>
+        </div>
+        <div class="ml-4 flex gap-2">
+          <button (click)="viewCategoryDetails(category)"
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+            Zobacz
+          </button>
+          <button (click)="openEditForm(category)"
+                  class="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+            Edytuj
+          </button>
+          <button *ngIf="category.name !== 'OTHER'"
+                  (click)="deleteCategory(category)"
+                  class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+            Usuń
+          </button>
+          <span *ngIf="category.name === 'OTHER'"
+                class="bg-gray-400 text-white font-medium py-2 px-4 rounded-lg cursor-not-allowed"
+                title="Nie można usunąć domyślnej kategorii systemu">
+            🔒 Chroniona
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="categories.length === 0" class="text-center py-12">
+      <p class="text-gray-600 dark:text-gray-300 text-lg">Brak kategorii w systemie</p>
+    </div>
+  </div>
+
+  <!-- Modal ze szczegółami kategorii -->
+  <div *ngIf="selectedCategory"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+       (click)="closeDetails()">
+    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6"
+         (click)="$event.stopPropagation()">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ selectedCategory.displayName }}</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            <span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded font-mono">
+              {{ selectedCategory.name }}
+            </span>
+            <span class="ml-2 text-gray-500 dark:text-gray-400">ID: {{ selectedCategory.id }}</span>
+          </p>
+        </div>
+        <button (click)="closeDetails()"
+                class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
+          &times;
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nazwa techniczna</h3>
+          <p class="text-gray-900 dark:text-white font-mono">{{ selectedCategory.name }}</p>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nazwa wyświetlana</h3>
+          <p class="text-gray-900 dark:text-white">{{ selectedCategory.displayName }}</p>
+        </div>
+
+        <div *ngIf="selectedCategory.description">
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Opis</h3>
+          <p class="text-gray-900 dark:text-white">{{ selectedCategory.description }}</p>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data utworzenia</h3>
+          <p class="text-gray-900 dark:text-white">{{ formatDate(selectedCategory.createdAt) }}</p>
+        </div>
+
+        <div>
+          <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data ostatniej aktualizacji</h3>
+          <p class="text-gray-900 dark:text-white">{{ formatDate(selectedCategory.updatedAt) }}</p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button (click)="closeDetails()"
+                class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+          Zamknij
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal formularza tworzenia/edycji -->
+  <div *ngIf="showForm"
+       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+       (click)="closeForm()">
+    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6"
+         (click)="$event.stopPropagation()">
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+          {{ editingCategoryId ? 'Edytuj Kategorię' : 'Dodaj Nową Kategorię' }}
+        </h2>
+      </div>
+
+      <div *ngIf="formError" class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+        {{ formError }}
+      </div>
+
+      <form (ngSubmit)="saveCategory()" class="space-y-4">
+        <!-- Nazwa techniczna (tylko przy tworzeniu) -->
+        <div *ngIf="!editingCategoryId">
+          <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Nazwa techniczna *
+          </label>
+          <input
+            type="text"
+            id="name"
+            [(ngModel)]="formData.name"
+            name="name"
+            required
+            [disabled]="!!editingCategoryId"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white font-mono disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed"
+            placeholder="Np. CONSTRUCTION (wielkie litery, bez spacji)">
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Używana w systemie. Po utworzeniu nie można zmienić. Używaj wielkich liter i podkreśleń zamiast spacji.
+          </p>
+        </div>
+
+        <div *ngIf="editingCategoryId">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Nazwa techniczna
+          </label>
+          <div class="px-4 py-2 bg-gray-100 dark:bg-gray-900 rounded-lg font-mono text-gray-600 dark:text-gray-400">
+            {{ formData.name }}
+          </div>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Nazwa techniczna nie może być zmieniona po utworzeniu kategorii.
+          </p>
+        </div>
+
+        <!-- Nazwa wyświetlana -->
+        <div>
+          <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Nazwa wyświetlana *
+          </label>
+          <input
+            type="text"
+            id="displayName"
+            [(ngModel)]="formData.displayName"
+            name="displayName"
+            required
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            placeholder="Np. Narzędzia budowlane">
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Nazwa widoczna dla użytkowników w aplikacji.
+          </p>
+        </div>
+
+        <!-- Opis -->
+        <div>
+          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Opis (opcjonalny)
+          </label>
+          <textarea
+            id="description"
+            [(ngModel)]="formData.description"
+            name="description"
+            rows="4"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            placeholder="Opis kategorii..."></textarea>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Krótki opis kategorii, może być wyświetlany użytkownikom.
+          </p>
+        </div>
+
+        <!-- Przyciski -->
+        <div class="flex justify-end gap-3 mt-6">
+          <button
+            type="button"
+            (click)="closeForm()"
+            class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+            Anuluj
+          </button>
+          <button
+            type="submit"
+            [disabled]="loading"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ loading ? 'Zapisywanie...' : (editingCategoryId ? 'Zapisz zmiany' : 'Dodaj kategorię') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

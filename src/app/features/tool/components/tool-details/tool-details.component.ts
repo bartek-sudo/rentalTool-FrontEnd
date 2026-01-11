@@ -172,4 +172,14 @@ export class ToolDetailsComponent implements OnInit{
     }
   }
 
+  // Metoda do pobrania nazwy kategorii do wyświetlenia
+  getCategoryDisplayName(category: any): string {
+    if (typeof category === 'string') {
+      // Dla zgodności wstecznej - gdy kategoria jest jeszcze stringiem
+      return category;
+    }
+    // Gdy kategoria jest obiektem z displayName
+    return category?.displayName || 'Brak kategorii';
+  }
+
 }

@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ToolService } from '../../services/tool.service';
 import { Subject, takeUntil } from 'rxjs';
 import { Tool } from '../../models/tool.model';
-import { Category } from '../../models/category.model';
+import { CategoryName } from '../../models/category.model';
 
 declare var google: any;
 
@@ -76,17 +76,17 @@ export class ToolsListComponent implements OnInit, OnDestroy {
   // Dostępne kategorie
   categories = [
     { value: '', label: 'Wszystkie kategorie' },
-    { value: Category.GARDENING, label: 'Ogród' },
-    { value: Category.CONSTRUCTION, label: 'Budowa' },
-    { value: Category.ELECTRIC, label: 'Elektryka' },
-    { value: Category.PLUMBING, label: 'Hydraulika' },
-    { value: Category.AUTOMOTIVE, label: 'Motoryzacja' },
-    { value: Category.PAINTING, label: 'Malowanie' },
-    { value: Category.CLEANING, label: 'Sprzątanie' },
-    { value: Category.WOODWORKING, label: 'Stolarstwo' },
-    { value: Category.METALWORKING, label: 'Obróbka metalu' },
-    { value: Category.OUTDOOR, label: 'Sprzęt na zewnątrz' },
-    { value: Category.OTHER, label: 'Inne' }
+    { value: CategoryName.GARDENING, label: 'Ogród' },
+    { value: CategoryName.CONSTRUCTION, label: 'Budowa' },
+    { value: CategoryName.ELECTRIC, label: 'Elektryka' },
+    { value: CategoryName.PLUMBING, label: 'Hydraulika' },
+    { value: CategoryName.AUTOMOTIVE, label: 'Motoryzacja' },
+    { value: CategoryName.PAINTING, label: 'Malowanie' },
+    { value: CategoryName.CLEANING, label: 'Sprzątanie' },
+    { value: CategoryName.WOODWORKING, label: 'Stolarstwo' },
+    { value: CategoryName.METALWORKING, label: 'Obróbka metalu' },
+    { value: CategoryName.OUTDOOR, label: 'Sprzęt na zewnątrz' },
+    { value: CategoryName.OTHER, label: 'Inne' }
   ];
 
   private destroy$ = new Subject<void>();

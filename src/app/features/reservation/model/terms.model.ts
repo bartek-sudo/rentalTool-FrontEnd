@@ -2,7 +2,14 @@ import { Reservation } from './reservation.model';
 
 export interface TermsDto {
   id: number;
-  category: string | null; // null = regulamin ogólny
+  categoryId: number;
+  categoryName: string;
+  title: string;
+  content: string;
+}
+
+export interface TermsRequest {
+  categoryId: number;
   title: string;
   content: string;
 }

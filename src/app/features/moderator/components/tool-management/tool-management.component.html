@@ -39,7 +39,7 @@
         <tr *ngFor="let tool of filterTools()" class="border-b border-gray-100 dark:border-gray-700">
           <!-- <td class="px-4 py-2">{{ tool.owner?.username }}</td> -->
           <td class="px-4 py-2 text-gray-900 dark:text-white">{{ tool.name }}</td>
-          <td class="px-4 py-2 text-gray-900 dark:text-white">{{ tool.category }}</td>
+          <td class="px-4 py-2 text-gray-900 dark:text-white">{{ getCategoryDisplayName(tool.category) }}</td>
           <td class="px-4 py-2">
             <span [ngClass]="getStatusColor(tool.moderationStatus)" class="px-2 py-1 rounded text-xs font-semibold">
               {{ getStatusLabel(tool.moderationStatus) }}

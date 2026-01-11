@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ToolService } from '../../services/tool.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { environment } from '../../../../../environments/enviroment';
-import { Category } from '../../models/category.model';
+import { CategoryName } from '../../models/category.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { TermsService } from '../../../reservation/services/terms.service';
@@ -84,7 +84,7 @@ export class EditToolComponent {
   currentTool: any = null;
 
   // Kategorie zgodne z backendem
-  categories = Object.values(Category);
+  categories = Object.values(CategoryName);
 
   // Regulaminy
   terms: TermsDto[] = [];
@@ -200,9 +200,9 @@ export class EditToolComponent {
       return;
     }
 
-    const generalTerms = this.terms.filter(term => !term.category);
+    const generalTerms = this.terms.filter(term => !term.categoryName);
     const categoryTerms = category
-      ? this.terms.filter(term => term.category === category)
+      ? this.terms.filter(term => term.categoryName === category)
       : [];
 
     this.filteredTerms = [...categoryTerms, ...generalTerms];

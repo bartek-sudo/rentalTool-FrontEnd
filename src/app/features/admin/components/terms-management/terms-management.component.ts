@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TermsService } from '../../../reservation/services/terms.service';
 import { TermsDto } from '../../../reservation/model/terms.model';
+import { Category } from '../../../tool/models/category.model';
 
 interface TermFormData {
   title: string;
-  category: string | null;
+  categoryId: number | null; // null tylko przed wyborem
   content: string;
 }
 
@@ -30,14 +31,57 @@ export class TermsManagementComponent implements OnInit {
   editingTermId: number | null = null;
   formData: TermFormData = {
     title: '',
-    category: null,
+    categoryId: null,
     content: ''
   };
   formError: string | null = null;
-  isGeneralTerm = false;
+
+  // Dostępne kategorie
+  availableCategories: Category[] = [];
+  categoriesWithoutTerms: Category[] = [];
 
   ngOnInit(): void {
     this.loadAllTerms();
+    this.loadCategoriesWithoutTerms();
+  }
+
+  loadCategoriesWithoutTerms(): void {
+    this.termsService.getAllCategories().subscribe({
+      next: (response) => {
+        if (response.data) {
+          this.categoriesWithoutTerms = response.data.categories;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading categories without terms:', err);
+      }
+    });
+  }
+
+  updateAvailableCategories(editingTermCategoryId: number | null = null): void {
+    // Backend zwraca kategorie bez regulaminu + zawsze kategorię OTHER
+    // Dla edycji dodajemy także obecną kategorię edytowanego regulaminu (jeśli nie jest już na liście)
+    if (editingTermCategoryId) {
+      // Znajdź aktualną kategorię w wszystkich terms
+      const currentTerm = this.terms.find(t => t.id === this.editingTermId);
+      if (currentTerm) {
+        const currentCategory: Category = {
+          id: currentTerm.categoryId,
+          name: currentTerm.categoryName,
+          displayName: currentTerm.categoryName // będzie nadpisane przy ładowaniu z backendu
+        };
+        // Dodaj obecną kategorię, jeśli nie ma jej już w liście
+        const hasCurrent = this.categoriesWithoutTerms.some(c => c.id === currentTerm.categoryId);
+        if (!hasCurrent && currentTerm.categoryName !== 'OTHER') {
+          // Dodaj obecną kategorię tylko jeśli to nie jest OTHER (OTHER jest już zawsze na liście)
+          this.availableCategories = [...this.categoriesWithoutTerms, currentCategory];
+        } else {
+          this.availableCategories = [...this.categoriesWithoutTerms];
+        }
+      }
+    } else {
+      this.availableCategories = [...this.categoriesWithoutTerms];
+    }
   }
 
   loadAllTerms(): void {
@@ -67,22 +111,24 @@ export class TermsManagementComponent implements OnInit {
     this.selectedTerm = null;
   }
 
-  getCategoryDisplay(category: string | null): string {
-    if (!category) {
+  getCategoryDisplay(categoryName: string | null): string {
+    if (!categoryName || categoryName === 'OTHER') {
       return 'Regulamin ogólny';
     }
-    return `Kategoria: ${category}`;
+    // Znajdź kategorię po nazwie i zwróć displayName
+    const category = this.availableCategories.find(c => c.name === categoryName);
+    return category ? `Kategoria: ${category.displayName}` : `Kategoria: ${categoryName}`;
   }
 
   openCreateForm(): void {
     this.editingTermId = null;
     this.formData = {
       title: '',
-      category: null,
+      categoryId: null,
       content: ''
     };
-    this.isGeneralTerm = false;
     this.formError = null;
+    this.updateAvailableCategories(); // Tylko kategorie bez regulaminu
     this.showForm = true;
   }
 
@@ -90,11 +136,11 @@ export class TermsManagementComponent implements OnInit {
     this.editingTermId = term.id;
     this.formData = {
       title: term.title,
-      category: term.category,
+      categoryId: term.categoryId,
       content: term.content
     };
-    this.isGeneralTerm = !term.category;
     this.formError = null;
+    this.updateAvailableCategories(term.categoryId); // Kategorie bez regulaminu + obecna
     this.showForm = true;
   }
 
@@ -104,14 +150,6 @@ export class TermsManagementComponent implements OnInit {
     this.formError = null;
   }
 
-  toggleGeneralTerm(): void {
-    if (this.isGeneralTerm) {
-      this.formData.category = null;
-    } else if (this.formData.category === null) {
-      this.formData.category = '';
-    }
-  }
-
   saveTerm(): void {
     // Validation
     if (!this.formData.title.trim()) {
@@ -119,8 +157,8 @@ export class TermsManagementComponent implements OnInit {
       return;
     }
 
-    if (!this.isGeneralTerm && !this.formData.category?.trim()) {
-      this.formError = 'Kategoria jest wymagana dla regulaminu kategorii';
+    if (!this.formData.categoryId) {
+      this.formError = 'Kategoria jest wymagana';
       return;
     }
 
@@ -134,7 +172,7 @@ export class TermsManagementComponent implements OnInit {
 
     const termData = {
       title: this.formData.title,
-      category: this.isGeneralTerm ? null : this.formData.category,
+      categoryId: this.formData.categoryId!,
       content: this.formData.content
     };
 
@@ -147,6 +185,7 @@ export class TermsManagementComponent implements OnInit {
         this.loading = false;
         this.closeForm();
         this.loadAllTerms();
+        this.loadCategoriesWithoutTerms(); // Odśwież listę kategorii bez regulaminu
       },
       error: (err) => {
         this.loading = false;
@@ -168,6 +207,7 @@ export class TermsManagementComponent implements OnInit {
       next: () => {
         this.loading = false;
         this.loadAllTerms();
+        this.loadCategoriesWithoutTerms(); // Odśwież listę kategorii bez regulaminu
       },
       error: (err) => {
         this.loading = false;

@@ -300,4 +300,13 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
       default: return status || 'Nieznany';
     }
   }
+
+  getCategoryDisplayName(category: any): string {
+    if (typeof category === 'string') {
+      // Dla zgodności wstecznej - gdy kategoria jest jeszcze stringiem
+      return category;
+    }
+    // Gdy kategoria jest obiektem z displayName
+    return category?.displayName || 'Brak kategorii';
+  }
 }

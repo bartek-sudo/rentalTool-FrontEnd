@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ToolService } from '../../services/tool.service';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Category } from '../../models/category.model';
+import { CategoryName } from '../../models/category.model';
 import { environment } from '../../../../../environments/enviroment';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { TermsService } from '../../../reservation/services/terms.service';
@@ -70,7 +70,7 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
   successMessage: string = '';
 
   // Kategorie zgodne z backendem
-  categories = Object.values(Category);
+  categories = Object.values(CategoryName);
 
   // Regulaminy
   terms: TermsDto[] = [];
@@ -171,9 +171,9 @@ export class CreateToolComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const generalTerms = this.terms.filter(term => !term.category);
+    const generalTerms = this.terms.filter(term => !term.categoryName);
     const categoryTerms = category
-      ? this.terms.filter(term => term.category === category)
+      ? this.terms.filter(term => term.categoryName === category)
       : [];
 
     this.filteredTerms = [...categoryTerms, ...generalTerms];

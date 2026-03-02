@@ -8,6 +8,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { TermsService } from '../../../reservation/services/terms.service';
 import { TermsDto } from '../../../reservation/model/terms.model';
+import { CategoryService } from '../../services/category.service';
+import { Category } from '../../models/category.model';
 
 // Definicje interfejsów dla Google Maps
 interface GoogleMapPosition {
@@ -44,14 +46,12 @@ interface GoogleGeocodeResult {
   formatted_address: string;
 }
 
-// Interface dla podglądu nowych zdjęć
 interface ImagePreview {
   file: File;
   url: string;
   isMain: boolean;
 }
 
-// Interface dla istniejących zdjęć
 interface ToolImage {
   id: number;
   url: string;
@@ -83,17 +83,15 @@ export class EditToolComponent {
   toolId: number = 0;
   currentTool: any = null;
 
-  // Kategorie zgodne z backendem
   categories = Object.values(CategoryName);
 
-  // Regulaminy
   terms: TermsDto[] = [];
   filteredTerms: TermsDto[] = [];
   selectedTermDetails: TermsDto | null = null;
   termsLoading: boolean = false;
   termsError: string = '';
+  availableCategories: Category[] = [];
 
-  // Zmienne dla zdjęć
   existingImages: ToolImage[] = [];
   selectedNewImages: ImagePreview[] = [];
   maxImages: number = 10;
@@ -102,7 +100,6 @@ export class EditToolComponent {
   isDragOver: boolean = false;
 
   private googleMapsApiKey = environment.googleMapsApiKey;
-  // Zmienne mapy
   private map: any = null;
   private marker: any = null;
   private geocoder: any = null;
@@ -114,7 +111,8 @@ export class EditToolComponent {
     private termsService: TermsService,
     private router: Router,
     private route: ActivatedRoute,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private categoryService: CategoryService
   ) {
     this.toolForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
@@ -125,12 +123,11 @@ export class EditToolComponent {
       latitude: [null, Validators.required],
       longitude: [null, Validators.required],
       isActive: [true],
-      termsId: [1, Validators.required] // Domyślnie regulamin ogólny, wymagane pole
+      termsId: [1, Validators.required]
     });
   }
 
   ngOnInit(): void {
-    // Pobierz ID narzędzia z parametrów routingu
     this.route.params.subscribe(params => {
       this.toolId = +params['id'];
       if (this.toolId) {
@@ -142,6 +139,7 @@ export class EditToolComponent {
     });
 
     this.loadTerms();
+    this.loadCategories();
 
     this.toolForm.get('category')?.valueChanges.subscribe(category => {
       this.updateFilteredTerms(category);
@@ -151,14 +149,12 @@ export class EditToolComponent {
       this.updateSelectedTermDetails(termId);
     });
 
-    // Dodanie skryptu Google Maps do strony
     this.loadGoogleMapsScript();
 
-    // Nasłuchiwanie na zmiany w polu adresu
     this.toolForm.get('address')?.valueChanges
       .pipe(
-        debounceTime(1000), // Opóźnienie 1 sekunda
-        distinctUntilChanged() // Pomija identyczne wartości
+        debounceTime(1000),
+        distinctUntilChanged()
       )
       .subscribe(address => {
         if (address && address.length > 5 && !this.isAddressFromMarker) {
@@ -167,11 +163,20 @@ export class EditToolComponent {
       });
   }
 
-  // Flaga, która zapobiega zapętleniu geocodingu
+  private loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (response) => {
+        this.availableCategories = response.data?.categories || [];
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+      }
+    });
+  }
+
   private isAddressFromMarker = false;
 
   ngAfterViewInit(): void {
-    // Mapa zostanie załadowana po załadowaniu skryptu Google Maps
   }
 
   private loadTerms(): void {
@@ -209,7 +214,7 @@ export class EditToolComponent {
 
     const currentTermId = this.toolForm.get('termsId')?.value;
     if (currentTermId && !this.filteredTerms.some(term => term.id === currentTermId)) {
-      this.toolForm.patchValue({ termsId: 1 }); // Ustaw domyślnie regulamin ogólny
+      this.toolForm.patchValue({ termsId: 1 });
       this.selectedTermDetails = this.terms.find(term => term.id === 1) || null;
     } else if (currentTermId) {
       this.updateSelectedTermDetails(currentTermId);
@@ -228,7 +233,8 @@ export class EditToolComponent {
     if (!category) {
       return 'Regulamin ogólny';
     }
-    return `Kategoria: ${this.formatCategoryName(category)}`;
+    const categoryObj = this.availableCategories.find(c => c.name === category);
+    return categoryObj ? `Kategoria: ${categoryObj.displayName}` : `Kategoria: ${this.formatCategoryName(category)}`;
   }
 
   private loadToolData(): void {
@@ -271,22 +277,20 @@ export class EditToolComponent {
         latitude: this.currentTool.latitude,
         longitude: this.currentTool.longitude,
         isActive: this.currentTool.isActive,
-        termsId: this.currentTool.termsId ?? 1 // Jeśli brak termsId, ustaw domyślnie 1 (regulamin ogólny)
+        termsId: this.currentTool.termsId ?? 1
       });
 
-      // Zaktualizuj mapę jeśli jest już załadowana
       if (this.map && this.marker) {
         this.updateMapWithToolLocation();
       }
     }
   }
 
-  // ========== METODY DO OBSŁUGI ZDJĘĆ ==========
+  //  METODY DO OBSŁUGI ZDJĘĆ
 
   onFileSelect(event: any): void {
     const files = event.target.files;
     this.handleFiles(files);
-    // Resetuj input aby można było wybrać te same pliki ponownie
     event.target.value = '';
   }
 
@@ -328,7 +332,6 @@ export class EditToolComponent {
         break;
       }
 
-      // Sprawdź czy plik już nie został dodany
       if (this.selectedNewImages.some(img =>
           img.file.name === file.name &&
           img.file.size === file.size &&
@@ -336,13 +339,12 @@ export class EditToolComponent {
         continue;
       }
 
-      // Utwórz URL do podglądu
       const reader = new FileReader();
       reader.onload = (e) => {
         const imagePreview: ImagePreview = {
           file: file,
           url: e.target?.result as string,
-          isMain: false // Nowe zdjęcia domyślnie nie są główne
+          isMain: false
         };
         this.selectedNewImages.push(imagePreview);
         this.errorMessage = '';
@@ -352,13 +354,11 @@ export class EditToolComponent {
   }
 
   private validateFile(file: File): boolean {
-    // Sprawdź typ pliku
     if (!this.allowedFileTypes.includes(file.type)) {
       this.errorMessage = 'Dozwolone są tylko pliki JPG, PNG i WebP.';
       return false;
     }
 
-    // Sprawdź rozmiar pliku
     if (file.size > this.maxFileSize) {
       this.errorMessage = 'Plik jest za duży. Maksymalny rozmiar to 5MB.';
       return false;
@@ -378,7 +378,6 @@ export class EditToolComponent {
         next: () => {
           this.existingImages = this.existingImages.filter(img => img.id !== image.id);
           this.successMessage = 'Zdjęcie zostało usunięte';
-          // setTimeout(() => this.successMessage = '', 3000);
         },
         error: (error) => {
           this.errorMessage = 'Nie udało się usunąć zdjęcia';
@@ -393,11 +392,9 @@ export class EditToolComponent {
 
     this.toolService.setMainImage(this.toolId, image.id).subscribe({
       next: () => {
-        // Zaktualizuj stan lokalnie
         this.existingImages.forEach(img => img.isMain = false);
         image.isMain = true;
         this.successMessage = 'Zdjęcie główne zostało zmienione';
-        // setTimeout(() => this.successMessage = '', 3000);
       },
       error: (error) => {
         this.errorMessage = 'Nie udało się zmienić zdjęcia głównego';
@@ -421,16 +418,13 @@ export class EditToolComponent {
       return;
     }
 
-    // Sprawdź czy któreś z nowych zdjęć ma być główne
     const hasMainImage = this.selectedNewImages.some(img => img.isMain);
     const hasExistingMainImage = this.existingImages.some(img => img.isMain);
 
-    // Jeśli żadne nowe zdjęcie nie jest główne i nie ma istniejącego głównego
     if (!hasMainImage && !hasExistingMainImage && this.selectedNewImages.length > 0) {
       this.selectedNewImages[0].isMain = true;
     }
 
-    // Wysyłaj zdjęcia sekwencyjnie
     this.uploadImageSequentially(0);
   }
 
@@ -447,18 +441,15 @@ export class EditToolComponent {
 
     this.toolService.uploadToolImage(this.toolId, formData).subscribe({
       next: (response) => {
-        // Przejdź do następnego zdjęcia
         this.uploadImageSequentially(index + 1);
       },
       error: (error) => {
         console.error(`Error uploading image ${index + 1}:`, error);
-        // Mimo błędu, przejdź do następnego zdjęcia
         this.uploadImageSequentially(index + 1);
       }
     });
   }
 
-  // ========== POZOSTAŁE METODY (bez zmian) ==========
 
   private updateMapWithToolLocation(): void {
     if (this.currentTool && this.map && this.marker) {
@@ -472,25 +463,21 @@ export class EditToolComponent {
   }
 
   private loadGoogleMapsScript(): void {
-    // Definiujemy globalną funkcję callback
     (window as any).initMap = () => {
       this.initMap();
     };
 
-    // Sprawdź, czy Google Maps jest już załadowane
     if ((window as any).google && (window as any).google.maps) {
       this.initMap();
       return;
     }
 
-    // Dodaj skrypt Google Maps do strony
     const script = this.renderer.createElement('script');
     script.type = 'text/javascript';
     script.src = `https://maps.googleapis.com/maps/api/js?key=${this.googleMapsApiKey}&libraries=places&callback=initMap`;
     script.defer = true;
     script.async = true;
 
-    // Dodajemy obsługę błędów ładowania
     script.onerror = () => {
       console.error('Nie udało się załadować Google Maps API');
       this.errorMessage = 'Nie udało się załadować mapy. Spróbuj odświeżyć stronę.';
@@ -500,14 +487,12 @@ export class EditToolComponent {
   }
 
   private initMap(): void {
-    // Upewnij się, że element DOM dla mapy istnieje
     if (!this.mapContainer || !this.mapContainer.nativeElement) {
       setTimeout(() => this.initMap(), 100);
       return;
     }
 
     try {
-      // Użyj lokalizacji z narzędzia lub domyślnej (Kraków)
       const defaultLocation = this.currentTool ? {
         lat: this.currentTool.latitude,
         lng: this.currentTool.longitude
@@ -516,7 +501,6 @@ export class EditToolComponent {
         lng: 19.9450
       };
 
-      // Utwórz mapę
       this.map = new (window as any).google.maps.Map(this.mapContainer.nativeElement, {
         center: defaultLocation,
         zoom: 13,
@@ -526,10 +510,8 @@ export class EditToolComponent {
         zoomControl: true
       });
 
-      // Utwórz geocoder
       this.geocoder = new (window as any).google.maps.Geocoder();
 
-      // Dodaj znacznik
       this.marker = new (window as any).google.maps.Marker({
         position: defaultLocation,
         map: this.map,
@@ -537,14 +519,12 @@ export class EditToolComponent {
         animation: (window as any).google.maps.Animation.DROP
       });
 
-      // Dodaj listener kliknięcia na mapę
       this.map.addListener('click', (event: any) => {
         if (event.latLng) {
           this.updateMarkerPosition(event.latLng);
         }
       });
 
-      // Dodaj listener przeciągnięcia znacznika
       this.marker.addListener('dragend', () => {
         if (this.marker && this.marker.getPosition()) {
           const position = this.marker.getPosition();
@@ -554,10 +534,8 @@ export class EditToolComponent {
         }
       });
 
-      // Inicjalizacja autouzupełniania dla pola adresu
       this.initAutocomplete();
 
-      // Jeśli mamy już dane narzędzia, zaktualizuj mapę
       if (this.currentTool) {
         this.updateMapWithToolLocation();
       }
@@ -567,25 +545,20 @@ export class EditToolComponent {
     }
   }
 
-  // Inicjalizacja autouzupełniania adresu
   private initAutocomplete(): void {
-    // Upewnij się, że element DOM dla pola adresu istnieje
     if (!this.addressInput || !this.addressInput.nativeElement) {
       setTimeout(() => this.initAutocomplete(), 100);
       return;
     }
 
     try {
-      // Inicjalizacja autouzupełniania Google dla pola adresu
       this.autocomplete = new (window as any).google.maps.places.Autocomplete(
         this.addressInput.nativeElement,
         { types: ['address'] }
       );
 
-      // Preferowanie wyników z Polski (opcjonalne)
       this.autocomplete.setComponentRestrictions({ country: 'pl' });
 
-      // Nasłuchiwanie na wybór adresu z listy podpowiedzi
       this.autocomplete.addListener('place_changed', () => {
         const place = this.autocomplete.getPlace();
 
@@ -594,7 +567,6 @@ export class EditToolComponent {
           return;
         }
 
-        // Aktualizacja mapy i znacznika
         if (place.geometry.location) {
           this.map.setCenter(place.geometry.location);
           this.map.setZoom(16);
@@ -606,7 +578,6 @@ export class EditToolComponent {
     }
   }
 
-  // Geocodowanie adresu wpisanego przez użytkownika
   geocodeAddress(address: string): void {
     if (!this.geocoder || this.isAddressFromMarker) return;
 
@@ -620,12 +591,10 @@ export class EditToolComponent {
         if (status === 'OK' && results && results[0] && results[0].geometry) {
           const location = results[0].geometry.location;
 
-          // Aktualizacja mapy i znacznika
           if (location) {
             this.map.setCenter(location);
             this.map.setZoom(16);
 
-            // Aktualizujemy pozycję znacznika bez ustawiania adresu (aby uniknąć zapętlenia)
             this.marker.setPosition(location);
             this.updateLocationInForm(location.lat(), location.lng());
           }
@@ -647,17 +616,14 @@ export class EditToolComponent {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        // Sukces: otrzymano pozycję
         const location = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
 
-        // Ustaw znacznik i wycentruj mapę
         if (this.map && this.marker) {
           this.map.setCenter(location);
 
-          // Tworzymy nowy obiekt LatLng
           const latLng = new (window as any).google.maps.LatLng(location.lat, location.lng);
           this.updateMarkerPosition(latLng);
         }
@@ -665,7 +631,6 @@ export class EditToolComponent {
         this.isLoadingLocation = false;
       },
       (error) => {
-        // Obsługa błędów geolokalizacji
         let errorMsg = 'Błąd podczas pobierania lokalizacji.';
         switch (error.code) {
           case error.PERMISSION_DENIED:
@@ -693,10 +658,8 @@ export class EditToolComponent {
     if (this.marker) {
       this.marker.setPosition(position);
 
-      // Zaktualizuj formularz
       this.updateLocationInForm(position.lat(), position.lng());
 
-      // Wykonaj geokodowanie odwrotne, aby uzyskać adres
       this.reverseGeocode(position.lat(), position.lng());
     }
   }
@@ -711,7 +674,7 @@ export class EditToolComponent {
   reverseGeocode(lat: number, lng: number): void {
     if (!this.geocoder) return;
 
-    this.isAddressFromMarker = true; // Ustawienie flagi, aby zapobiec zapętleniu
+    this.isAddressFromMarker = true;
 
     this.geocoder.geocode(
       { location: { lat, lng } },
@@ -721,7 +684,6 @@ export class EditToolComponent {
 
           this.toolForm.patchValue({ address });
 
-          // Resetujemy flagę po krótkim opóźnieniu, aby zdążyć obsłużyć zmianę w formularzu
           setTimeout(() => {
             this.isAddressFromMarker = false;
           }, 1500);
@@ -744,14 +706,12 @@ export class EditToolComponent {
 
     const formData = this.toolForm.value;
 
-    // Upewnij się, że latitude i longitude nie są null
     if (!formData.latitude || !formData.longitude) {
       this.errorMessage = 'Lokalizacja jest wymagana. Wybierz punkt na mapie.';
       this.isSubmitting = false;
       return;
     }
 
-    // Walidacja: sprawdź czy są istniejące lub nowe zdjęcia
     if (this.existingImages.length === 0 && this.selectedNewImages.length === 0) {
       this.errorMessage = 'Narzędzie musi mieć co najmniej jedno zdjęcie przed przesłaniem do moderacji.';
       this.isSubmitting = false;
@@ -760,7 +720,6 @@ export class EditToolComponent {
 
     this.toolService.updateTool(this.toolId, formData).subscribe({
       next: (response) => {
-        // Po zaktualizowaniu danych narzędzia, prześlij nowe zdjęcia
         this.uploadNewImages();
       },
       error: (error) => {
@@ -775,7 +734,6 @@ export class EditToolComponent {
     this.isSubmitting = false;
     this.successMessage = 'Narzędzie zostało pomyślnie zaktualizowane!';
 
-    // Przekieruj do listy narzędzi użytkownika
     setTimeout(() => {
       this.router.navigate(['/my-tools']);
     }, 1000);
@@ -801,10 +759,8 @@ export class EditToolComponent {
           this.isSubmitting = false;
           this.successMessage = `Narzędzie zostało pomyślnie ${newActiveStatus ? 'aktywowane' : 'dezaktywowane'}!`;
 
-          // Zaktualizuj dane narzędzia
           this.currentTool = response.data.Tool;
 
-          // Opcjonalnie: przekieruj do listy narzędzi po pewnym czasie
           setTimeout(() => {
             this.router.navigate(['/my-tools']);
           }, 1000);
@@ -818,7 +774,6 @@ export class EditToolComponent {
     }
   }
 
-  // Pomocnicza metoda do oznaczania wszystkich pól jako dotknięte (dla walidacji)
   markFormGroupTouched(formGroup: FormGroup) {
     Object.values(formGroup.controls).forEach(control => {
       control.markAsTouched();
@@ -828,7 +783,6 @@ export class EditToolComponent {
     });
   }
 
-  // Pomocnicze gettery dla uproszczenia dostępu w szablonie
   get nameControl() { return this.toolForm.get('name'); }
   get descriptionControl() { return this.toolForm.get('description'); }
   get categoryControl() { return this.toolForm.get('category'); }
@@ -836,8 +790,11 @@ export class EditToolComponent {
   get addressControl() { return this.toolForm.get('address'); }
   get termsControl() { return this.toolForm.get('termsId'); }
 
-  // Metoda do formatowania nazw kategorii
   formatCategoryName(category: string): string {
+    const categoryObj = this.availableCategories.find(c => c.name === category);
+    if (categoryObj) {
+      return categoryObj.displayName;
+    }
     const categoryLabels: { [key: string]: string } = {
       'GARDENING': 'Ogród',
       'CONSTRUCTION': 'Budowa',

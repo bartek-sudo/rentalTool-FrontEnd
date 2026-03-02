@@ -21,10 +21,10 @@ export interface RegulationsAcceptRequest {
 export interface ContactInfo {
   renterEmail: string;
   renterName: string;
-  renterPhoneNumber: string; // "Nie podano" jeśli null
+  renterPhoneNumber: string;
   ownerEmail: string;
   ownerName: string;
-  ownerPhoneNumber: string; // "Nie podano" jeśli null
+  ownerPhoneNumber: string; 
 }
 
 export interface RegulationsAcceptResponse {

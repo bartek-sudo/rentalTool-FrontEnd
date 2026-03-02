@@ -16,13 +16,11 @@ export class MyToolsComponent {
   isLoading: boolean = false;
   errorMessage: string = '';
 
-  // Paginacja
   currentPage: number = 0;
   pageSize: number = 10;
   totalItems: number = 0;
   totalPages: number = 0;
 
-  // Sortowanie
   selectedSort: string = 'created_desc';
   sortOptions = [
     { value: 'created_desc', label: 'Najnowsze' },
@@ -42,7 +40,6 @@ export class MyToolsComponent {
   loadMyTools(): void {
     this.isLoading = true;
 
-    // Mapowanie opcji sortowania na parametry API
     let sortBy = 'createdAt';
     let sortDirection = 'desc';
 

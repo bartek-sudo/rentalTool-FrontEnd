@@ -32,7 +32,7 @@ export class ToolService {
 
   getToolById(toolId: number): Observable<Tool> {
     return this.http.get<{ data: { Tool: Tool } }>(`${this.apiUrl}/${toolId}`).pipe(
-      map(response => response.data.Tool) // Wyciągamy obiekt Tool z odpowiedzi
+      map(response => response.data.Tool)
     );
   }
 
@@ -103,12 +103,10 @@ setMainImage(toolId: number, imageId: number): Observable<any> {
       params = params.set('category', category);
     }
 
-    // Parametry geolokalizacji (opcjonalne)
     if (latitude !== undefined && longitude !== undefined) {
       params = params.set('latitude', latitude.toString());
       params = params.set('longitude', longitude.toString());
 
-      // radius może być null (∞) lub liczbą - jeśli null, nie dodawaj parametru wcale
       if (radius !== undefined && radius !== null) {
         params = params.set('radius', radius.toString());
       }
@@ -117,7 +115,6 @@ setMainImage(toolId: number, imageId: number): Observable<any> {
     return this.http.get<ToolApiResponse>(`${this.apiUrl}/search`, { params });
   }
 
-  // Opcjonalnie: metoda aktualizacji terminu wyszukiwania
   setSearchTerm(term: string) {
     this.searchTermSubject.next(term);
   }
@@ -140,7 +137,6 @@ setMainImage(toolId: number, imageId: number): Observable<any> {
     return this.http.post<any>(url, body);
   }
 
-  // Metody dla moderacji
   getToolsForModeration(page: number = 0, size: number = 10): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/moderation?page=${page}&size=${size}`);
   }

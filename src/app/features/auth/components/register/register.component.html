@@ -8,41 +8,40 @@
       class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
       <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
         <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-          Create an account
+          Utwórz konto
         </h1>
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4 md:space-y-6">
           <div>
-            <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your email</label>
+            <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Adres email</label>
             <input type="email" name="email" id="email" formControlName="email"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-              placeholder="name@company.com" required="">
+              placeholder="nazwa@firma.pl" required="">
             @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
             <div class="mt-2 text-sm text-red-600 dark:text-red-500">
-              Please enter a valid email address.
+              Wprowadź poprawny adres email.
             </div>
             }
           </div>
           <div>
-            <label for="firstName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">First
-              Name</label>
-            <input type="text" name="firstName" id="firstName" formControlName="firstName" placeholder="John"
+            <label for="firstName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Imię</label>
+            <input type="text" name="firstName" id="firstName" formControlName="firstName" placeholder="Jan"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               required="">
             @if (registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched) {
             <div class="mt-2 text-sm text-red-600 dark:text-red-500">
-              First name is required.
+              Imię jest wymagane.
             </div>
             }
           </div>
           <div>
-            <label for="lastName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Last Name</label>
-            <input type="text" name="lastName" id="lastName" formControlName="lastName" placeholder="Doe"
+            <label for="lastName" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nazwisko</label>
+            <input type="text" name="lastName" id="lastName" formControlName="lastName" placeholder="Kowalski"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               required="">
             @if (registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched) {
             <div class="mt-2 text-sm text-red-600 dark:text-red-500">
-              Last name is required.
+              Nazwisko jest wymagane.
             </div>
             }
           </div>
@@ -66,31 +65,30 @@
             }
           </div>
           <div>
-            <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
+            <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Hasło</label>
             <input type="password" name="password" id="password" formControlName="password" placeholder="••••••••"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               required="">
             @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
             <div class="mt-2 text-sm text-red-600 dark:text-red-500">
-              The password must be at least 6 characters long.
+              Hasło musi mieć co najmniej 6 znaków.
             </div>
             }
           </div>
           <div>
-            <label for="confirm-password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm
-              password</label>
+            <label for="confirm-password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Potwierdź hasło</label>
             <input type="password" name="confirm-password" id="confirm-password"
               formControlName="confirmPassword" placeholder="••••••••"
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               required="">
             @if (registerForm.get('confirmPassword')?.invalid && registerForm.get('confirmPassword')?.touched) {
             <div class="mt-2 text-sm text-red-600 dark:text-red-500">
-              The password confirmation is required.
+              Potwierdzenie hasła jest wymagane.
             </div>
             }
             @if (registerForm.errors?.['passwordsNotMatch'] && registerForm.get('confirmPassword')?.touched) {
             <div class="mt-2 text-sm text-red-600 dark:text-red-500">
-              The passwords do not match.
+              Hasła nie są identyczne.
             </div>
             }
           </div>
@@ -101,9 +99,8 @@
                 required="">
             </div>
             <div class="ml-3 text-sm">
-              <label for="terms" class="font-light text-gray-500 dark:text-gray-300">I accept the <a
-                  class="font-medium text-primary-600 hover:underline dark:text-primary-500" href="#">Terms and
-                  Conditions</a>
+              <label for="terms" class="font-light text-gray-500 dark:text-gray-300">Akceptuję <a
+                  class="font-medium text-primary-600 hover:underline dark:text-primary-500" href="#">Regulamin</a>
               </label>
               @if (registerForm.get('terms')?.invalid && registerForm.get('terms')?.touched) {
               <div class="text-red-500 mt-1">

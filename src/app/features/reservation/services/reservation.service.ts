@@ -27,11 +27,6 @@ export class ReservationService {
     return this.http.get<any>(`${this.apiUrl}/my-tools-reservations`);
   }
 
-  // Pobierz szczegóły rezerwacji po ID
-  // getReservationById(id: number): Observable<any> {
-  //   return this.http.get<any>(`${this.apiUrl}/${id}`);
-  // }
-
   // Potwierdź rezerwację (jako właściciel)
   confirmReservation(id: number): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/${id}/confirm`, {});

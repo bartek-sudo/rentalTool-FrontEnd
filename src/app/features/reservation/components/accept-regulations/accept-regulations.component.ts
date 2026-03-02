@@ -7,6 +7,8 @@ import { TermsService } from '../../services/terms.service';
 import { ToolService } from '../../../tool/services/tool.service';
 import { TermsDto, ContactInfo } from '../../model/terms.model';
 import { Reservation, ReservationStatus, normalizeReservationStatus } from '../../model/reservation.model';
+import { CategoryService } from '../../../tool/services/category.service';
+import { Category } from '../../../tool/models/category.model';
 
 @Component({
   selector: 'app-accept-regulations',
@@ -23,20 +25,34 @@ export class AcceptRegulationsComponent implements OnInit {
   errorMessage: string = '';
   contactInfo: ContactInfo | null = null;
   showContactInfo: boolean = false;
+  availableCategories: Category[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private reservationService: ReservationService,
     private termsService: TermsService,
-    private toolService: ToolService
+    private toolService: ToolService,
+    private categoryService: CategoryService
   ) {}
 
   ngOnInit(): void {
     this.reservationId = Number(this.route.snapshot.paramMap.get('id'));
     if (this.reservationId) {
       this.loadReservation();
+      this.loadCategories();
     }
+  }
+
+  private loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (response) => {
+        this.availableCategories = response.data?.categories || [];
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+      }
+    });
   }
 
   loadReservation(): void {
@@ -125,7 +141,6 @@ export class AcceptRegulationsComponent implements OnInit {
         if (response.data) {
           this.contactInfo = response.data.contactInfo;
           this.showContactInfo = true;
-          // Zaktualizuj rezerwację
           if (response.data.reservation) {
             response.data.reservation.status = normalizeReservationStatus(response.data.reservation.status);
             this.reservation = response.data.reservation;
@@ -147,6 +162,14 @@ export class AcceptRegulationsComponent implements OnInit {
 
   closeContactInfo(): void {
     this.router.navigate(['/my-rentals']);
+  }
+
+  getCategoryDisplayName(categoryName: string | null): string {
+    if (!categoryName || categoryName === 'OTHER') {
+      return 'Regulamin ogólny';
+    }
+    const category = this.availableCategories.find(c => c.name === categoryName);
+    return category ? category.displayName : categoryName;
   }
 }
 

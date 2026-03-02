@@ -39,7 +39,7 @@
         <!-- Przycisk wyszukiwania mobilnego -->
         <button id="toggleSidebarMobileSearch" type="button" (click)="toggleMobileSearch()"
           class="p-2 text-gray-500 rounded-lg lg:hidden hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
-          <span class="sr-only">Search</span>
+          <span class="sr-only">Szukaj</span>
           <!-- Search icon -->
           <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
             <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -74,7 +74,7 @@
         <button type="button"
           class="flex w-10 h-10 p-0 bg-transparent rounded-full items-center justify-center text-sm md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
           id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
-          <span class="sr-only">Open user menu</span>
+          <span class="sr-only">Otwórz menu użytkownika</span>
           <span class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium text-lg">
             {{getInitials(authService.currentUser()?.firstName, authService.currentUser()?.lastName)}}
           </span>
@@ -82,11 +82,11 @@
         } @else {
         <a routerLink="/login"
           class="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 py-2 md:px-5 md:py-2.5 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
-          Login
+          Zaloguj się
         </a>
         <a routerLink="/register"
           class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 md:px-5 md:py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-          Sign up
+          Zarejestruj się
         </a>
         }
 
@@ -160,8 +160,7 @@
           <ul class="py-1 text-gray-500 dark:text-gray-400" aria-labelledby="dropdown">
             <li>
               <button (click)="logout()"
-                class="block w-full text-left py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sign
-                out</button>
+                class="block w-full text-left py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Wyloguj się</button>
             </li>
           </ul>
         </div>

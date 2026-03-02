@@ -33,7 +33,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit() {
     initFlowbite();
-    
+
     // Sprawdź czy użytkownik został przekierowany po weryfikacji
     this.route.queryParams.subscribe(params => {
       if (params['verified'] === 'true') {
@@ -61,25 +61,17 @@ export class LoginComponent implements OnInit {
       },
       error: error => {
         this.isLoading = false;
-        
+
         const errorStatus = error.status || error.error?.statusCode;
         const errorReason = error.error?.reason || '';
         const errorMessage = error.error?.message || '';
-        
-        // Sprawdź czy błąd dotyczy niezweryfikowanego emaila
-        // WAŻNE: Używamy TYLKO reason "Email not verified" jako wskaźnika
-        // Backend zwraca ten konkretny reason TYLKO dla błędów weryfikacji emaila
-        // Nie używamy "Illegal account access" ani message, bo mogą pojawić się przy różnych błędach (np. złe hasło)
-        
-        // Błąd weryfikacji emaila TYLKO jeśli reason jest dokładnie "Email not verified"
+
         const isEmailNotVerified = errorReason === 'Email not verified';
-        
+
         if (isEmailNotVerified) {
           this.emailNotVerified = true;
-          // Zawsze używaj polskiego komunikatu dla niezweryfikowanego emaila
           this.errorMessage = 'Twój email nie został zweryfikowany. Sprawdź swoją skrzynkę pocztową i kliknij link weryfikacyjny, aby aktywować konto.';
         } else {
-          // Inny błąd - nie dotyczy weryfikacji (np. złe hasło, nieprawidłowe dane)
           this.emailNotVerified = false;
           this.errorMessage = errorMessage || 'Wystąpił błąd. Spróbuj ponownie później.';
         }

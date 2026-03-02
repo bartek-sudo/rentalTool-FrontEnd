@@ -5,6 +5,10 @@ import { Reservation, ReservationStatus, normalizeReservationStatus } from '../.
 import { ToolService } from '../../../tool/services/tool.service';
 import { ReservationService } from '../../services/reservation.service';
 import { UserService } from '../../../user/services/user.service';
+import { TermsService } from '../../services/terms.service';
+import { TermsDto } from '../../model/terms.model';
+import { CategoryService } from '../../../tool/services/category.service';
+import { Category } from '../../../tool/models/category.model';
 
 @Component({
   selector: 'app-my-rentals',
@@ -19,6 +23,11 @@ export class MyRentalsComponent {
   successMessage: string = '';
   selectedContactUser: any = null; // Przechowuje dane użytkownika do wyświetlenia w modalu
   showContactModal: boolean = false; // Steruje widocznością modalu
+  // Terms modal
+  selectedTerms: TermsDto | null = null;
+  showTermsModal: boolean = false;
+  isLoadingTerms: boolean = false;
+  availableCategories: Category[] = [];
 
   // Dla filtrowania według statusu
   activeStatusFilter: string = 'all';
@@ -36,11 +45,25 @@ export class MyRentalsComponent {
     private reservationService: ReservationService,
     private toolService: ToolService,
     private userService: UserService,
-    private router: Router
+    private router: Router,
+    private termsService: TermsService,
+    private categoryService: CategoryService
   ) { }
 
   ngOnInit(): void {
     this.loadRentals();
+    this.loadCategories();
+  }
+
+  private loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (response) => {
+        this.availableCategories = response.data?.categories || [];
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+      }
+    });
   }
 
   loadRentals(): void {
@@ -51,19 +74,15 @@ export class MyRentalsComponent {
     this.reservationService.getMyRentals().subscribe({
       next: (response) => {
         this.rentals = response.data.rentals;
-        // Normalizuj statusy - zamień stare statusy PAID/FINISHED na nowe
         this.rentals.forEach(rental => {
           rental.status = normalizeReservationStatus(rental.status);
         });
 
-        // Pobierz informacje o narzędziach i właścicielach
         this.rentals.forEach(rental => {
-          // Pobierz dane narzędzia
           this.toolService.getToolById(rental.toolId).subscribe({
             next: (tool) => {
               rental.tool = tool;
 
-              // Pobierz dane właściciela narzędzia
               if (rental.tool && rental.tool.ownerId) {
                 this.userService.getUserById(rental.tool.ownerId).subscribe({
                   next: (ownerResponse) => {
@@ -104,19 +123,43 @@ export class MyRentalsComponent {
     this.activeStatusFilter = status;
   }
 
-  // Metoda do otwarcia modala akceptacji regulaminu
   openAcceptRegulationsModal(reservationId: number): void {
-    // Przekieruj do komponentu akceptacji regulaminu
     this.router.navigate(['/accept-regulations', reservationId]);
   }
 
-  // Metoda do otwarcia modala kontaktu
+  openTermsModal(rental: Reservation): void {
+    const termsId = rental.termsId ?? rental.tool?.termsId ?? null;
+    if (!termsId) {
+      this.errorMessage = 'Brak przypisanego regulaminu do tej rezerwacji.';
+      return;
+    }
+
+    this.isLoadingTerms = true;
+    this.selectedTerms = null;
+    this.termsService.getTermsById(termsId).subscribe({
+      next: (response) => {
+        this.selectedTerms = response.data?.terms || null;
+        this.showTermsModal = true;
+        this.isLoadingTerms = false;
+      },
+      error: (error) => {
+        console.error('Błąd podczas ładowania regulaminu:', error);
+        this.errorMessage = 'Nie udało się pobrać treści regulaminu.';
+        this.isLoadingTerms = false;
+      }
+    });
+  }
+
+  closeTermsModal(): void {
+    this.showTermsModal = false;
+    this.selectedTerms = null;
+  }
+
   openContactModal(user: any): void {
     this.selectedContactUser = user;
     this.showContactModal = true;
   }
 
-  // Metoda do zamknięcia modala kontaktu
   closeContactModal(): void {
     this.showContactModal = false;
     this.selectedContactUser = null;
@@ -136,16 +179,12 @@ cancelReservation(reservationId: number): void {
       const index = this.rentals.findIndex(r => r.id === reservationId);
 
       if (index !== -1) {
-        // Zachowaj referencje przed aktualizacją
         const toolRef = this.rentals[index].tool;
         const ownerRef = this.rentals[index].owner;
 
-        // Aktualizuj rezerwację
         this.rentals[index] = response.data.reservation;
-        // Normalizuj status - zamień stare statusy PAID/FINISHED na nowe
         this.rentals[index].status = normalizeReservationStatus(this.rentals[index].status);
 
-        // Przywróć referencje
         this.rentals[index].tool = toolRef;
         this.rentals[index].owner = ownerRef;
       }
@@ -156,7 +195,6 @@ cancelReservation(reservationId: number): void {
     error: (error) => {
       console.error('Błąd podczas anulowania rezerwacji:', error);
 
-      // Obsługa konkretnych kodów błędów HTTP
       if (error.status === 400) {
         this.errorMessage = 'Nie można anulować tej rezerwacji. Rezerwacja nie jest w odpowiednim statusie.';
       } else if (error.status === 403) {
@@ -174,7 +212,6 @@ cancelReservation(reservationId: number): void {
   });
 }
 
-  // Helper do formatowania daty
   formatDate(dateString: string | null | undefined): string {
     if (!dateString) {
       return 'Brak daty';
@@ -183,7 +220,6 @@ cancelReservation(reservationId: number): void {
     try {
       const date = new Date(dateString);
 
-      // Sprawdź czy data jest poprawna
       if (isNaN(date.getTime())) {
         return 'Nieprawidłowa data';
       }
@@ -195,7 +231,6 @@ cancelReservation(reservationId: number): void {
     }
   }
 
-  // Helper do tłumaczenia statusu
   translateStatus(status: string): string {
     switch (status) {
       case ReservationStatus.PENDING: return 'Oczekująca';
@@ -206,7 +241,6 @@ cancelReservation(reservationId: number): void {
     }
   }
 
-  // Helper do określania kolorów statusu
   getStatusColor(status: string): string {
     switch (status) {
       case ReservationStatus.PENDING: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
@@ -215,5 +249,13 @@ cancelReservation(reservationId: number): void {
       case ReservationStatus.CANCELED: return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
+  }
+
+  getCategoryDisplay(categoryName: string | null): string {
+    if (!categoryName || categoryName === 'OTHER') {
+      return 'Regulamin ogólny';
+    }
+    const category = this.availableCategories.find(c => c.name === categoryName);
+    return category ? category.displayName : categoryName;
   }
 }

@@ -22,10 +22,8 @@ export class ToolAvailabilityComponent implements OnInit {
   isLoading: boolean = false;
   errorMessage: string = '';
 
-  // Dni tygodnia
   weekdays: string[] = ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'];
 
-  // Kalendarz - tablica dni
   calendarDays: any[] = [];
 
   constructor(
@@ -44,30 +42,22 @@ export class ToolAvailabilityComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
-  // Poprawiona metoda z właściwym mapowaniem danych
   loadAvailabilityData(): void {
     this.isLoading = true;
     this.errorMessage = '';
 
     const today = new Date();
 
-    // Poprawiona kalkulacja: pierwszy dzień obecnego miesiąca
     const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    // Poprawna kalkulacja: ostatni dzień za 3 miesiące
-    // new Date(year, month, 0) daje ostatni dzień poprzedniego miesiąca
     const endDate = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate());
 
     const startDateStr = this.dateToString(startDate);
     const endDateStr = this.dateToString(endDate);
 
-    // console.log('Start date:', startDateStr); 
-    // console.log('End date:', endDateStr);
-
     this.toolService.getToolAvailability(this.toolId, startDateStr, endDateStr)
       .subscribe({
         next: (data) => {
-          // Mapowanie danych jeśli API używa 'available' zamiast 'isAvailable'
           this.availabilityData = data.map((item: any) => ({
             date: item.date,
             available: item.available !== undefined ? item.available : item.isAvailable
@@ -84,7 +74,6 @@ export class ToolAvailabilityComponent implements OnInit {
       });
   }
 
-  // Dodaj przykładowe dane jako fallback
   generateExampleData(): void {
     const today = new Date();
     const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -104,7 +93,6 @@ export class ToolAvailabilityComponent implements OnInit {
     this.generateCalendar();
   }
 
-  // Generowanie kalendarza
   generateCalendar(): void {
     const year = this.currentMonth.getFullYear();
     const month = this.currentMonth.getMonth();
@@ -114,7 +102,6 @@ export class ToolAvailabilityComponent implements OnInit {
 
     this.calendarDays = [];
 
-    // Dni z poprzedniego miesiąca (puste komórki)
     for (let i = 0; i < firstDayOfMonth; i++) {
       this.calendarDays.push({
         day: null,
@@ -122,7 +109,6 @@ export class ToolAvailabilityComponent implements OnInit {
       });
     }
 
-    // Dni aktualnego miesiąca
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       this.calendarDays.push({
@@ -136,7 +122,6 @@ export class ToolAvailabilityComponent implements OnInit {
     }
   }
 
-  // Pozostałe metody
   getDaysInMonth(date: Date): number {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   }
@@ -152,12 +137,10 @@ export class ToolAvailabilityComponent implements OnInit {
            date.getFullYear() === today.getFullYear();
   }
 
-  // POPRAWKA: Dodaj sprawdzenie czy dzień jest poza zakresem danych
   isDayAvailable(year: number, month: number, day: number): boolean {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const dayData = this.availabilityData.find(d => d.date === dateStr);
 
-    // Jeśli nie znaleziono dnia w danych, traktuj jako niedostępny
     if (!dayData) return false;
 
     return dayData.available;
@@ -219,7 +202,6 @@ export class ToolAvailabilityComponent implements OnInit {
     this.generateCalendar();
   }
 
-  // POPRAWKA: Dodaj ponowne ładowanie danych przy zmianie miesiąca
   prevMonth(): void {
     this.currentMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() - 1, 1);
     this.checkIfNeedToLoadData();
@@ -232,7 +214,6 @@ export class ToolAvailabilityComponent implements OnInit {
     this.generateCalendar();
   }
 
-  // DODANE: Sprawdź czy trzeba załadować nowe dane
   checkIfNeedToLoadData(): void {
     const currentMonthStr = this.currentMonth.toISOString().split('T')[0].substring(0, 7);
     const hasDataForMonth = this.availabilityData.some(day =>
@@ -278,20 +259,19 @@ export class ToolAvailabilityComponent implements OnInit {
       startDate: this.dateToString(this.selectedStartDate),
       endDate: this.dateToString(this.selectedEndDate),
       toolId: this.toolId,
-      termsId: 1 // Domyślnie regulamin ogólny
+      termsId: 1
     };
 
     this.reservationService.createReservation(reservationData)
       .subscribe({
         next: () => {
-          alert(`Rezerwacja potwierdzona od ${this.formatDate(this.selectedStartDate)} do ${this.formatDate(this.selectedEndDate)}`);
+          alert(`Rezerwacja utworzona od ${this.formatDate(this.selectedStartDate)} do ${this.formatDate(this.selectedEndDate)}`);
           this.resetSelection();
-          this.loadAvailabilityData(); // Odśwież dane po udanej rezerwacji
+          this.loadAvailabilityData();
         },
         error: (error) => {
           console.error('Błąd podczas tworzenia rezerwacji:', error);
 
-          // Sprawdź czy to błąd "You cannot reserve your own tool"
           if (error.error?.message === 'You cannot reserve your own tool') {
             this.errorMessage = 'Nie możesz zarezerwować swojego własnego narzędzia.';
           } else {
@@ -304,13 +284,12 @@ export class ToolAvailabilityComponent implements OnInit {
   }
 
 
-  // Metody do obliczania ceny
   getNumberOfDays(): number {
     if (!this.selectedStartDate || !this.selectedEndDate) return 0;
 
     const timeDiff = this.selectedEndDate.getTime() - this.selectedStartDate.getTime();
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    return daysDiff + 1; // Dodajemy 1, bo rezerwacja obejmuje pierwszy i ostatni dzień
+    return daysDiff + 1;
   }
 
   getTotalPrice(): number {

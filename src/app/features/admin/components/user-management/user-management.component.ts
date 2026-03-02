@@ -23,7 +23,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
   Math = Math;
 
-  // Modal states
   showUserDetails = false;
   showRoleModal = false;
   selectedUser: User | null = null;
@@ -170,7 +169,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     this.selectedUser = null;
   }
 
-  // Helper methods
   getUserStatus(user: User): string {
     if (user.blocked) return 'Zablokowany';
     if (!user.verified) return 'Niezweryfikowany';
@@ -195,12 +193,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     try {
-      // Backend zwraca format: "23-05-2025 15:19:39"
-      // Konwertuj na format ISO: "2025-05-23T15:19:39"
       const parts = dateString.split(' ');
       if (parts.length === 2) {
-        const datePart = parts[0]; // "23-05-2025"
-        const timePart = parts[1]; // "15:19:39"
+        const datePart = parts[0];
+        const timePart = parts[1];
 
         const dateParts = datePart.split('-');
         if (dateParts.length === 3) {
@@ -226,7 +222,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         }
       }
 
-      // Fallback - spróbuj standardowego parsowania
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
         return 'Nieprawidłowa data';

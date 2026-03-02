@@ -4,9 +4,7 @@ import { routes } from './app.routes';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/services/auth.service';
-// import { CookieService } from 'ngx-cookie-service';
 
-// Funkcja inicjalizująca stan autentykacji przed startem aplikacji
 function initializeAuth(authService: AuthService): () => Promise<void> {
   return () => authService.initializeAuth();
 }
@@ -25,6 +23,5 @@ export const appConfig: ApplicationConfig = {
       deps: [AuthService],
       multi: true
     },
-    // CookieService
   ],
 };

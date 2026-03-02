@@ -5,6 +5,10 @@ import { Reservation, ReservationStatus, normalizeReservationStatus } from '../.
 import { ReservationService } from '../../services/reservation.service';
 import { ToolService } from '../../../tool/services/tool.service';
 import { UserService } from '../../../user/services/user.service';
+import { TermsService } from '../../services/terms.service';
+import { TermsDto } from '../../model/terms.model';
+import { CategoryService } from '../../../tool/services/category.service';
+import { Category } from '../../../tool/models/category.model';
 
 @Component({
   selector: 'app-my-tool-reservations',
@@ -17,10 +21,14 @@ export class MyToolReservationsComponent {
   isLoading: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
-  selectedContactUser: any = null; // Przechowuje dane użytkownika do wyświetlenia w modalu
-  showContactModal: boolean = false; // Steruje widocznością modalu
+  selectedContactUser: any = null;
+  showContactModal: boolean = false;
+  // Terms modal
+  selectedTerms: TermsDto | null = null;
+  showTermsModal: boolean = false;
+  isLoadingTerms: boolean = false;
+  availableCategories: Category[] = [];
 
-  // Dla filtrowania według statusu
   activeStatusFilter: string = 'all';
   statusFilters = [
     { value: 'all', label: 'Wszystkie' },
@@ -30,16 +38,30 @@ export class MyToolReservationsComponent {
     { value: 'CANCELED', label: 'Anulowane' }
   ];
 
-  ReservationStatus = ReservationStatus; // dla dostępu w template
+  ReservationStatus = ReservationStatus;
 
   constructor(
     private reservationService: ReservationService,
     private toolService: ToolService,
-    private userService: UserService
+    private userService: UserService,
+    private termsService: TermsService,
+    private categoryService: CategoryService
   ) { }
 
   ngOnInit(): void {
     this.loadReservations();
+    this.loadCategories();
+  }
+
+  private loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (response) => {
+        this.availableCategories = response.data?.categories || [];
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+      }
+    });
   }
 
   loadReservations(): void {
@@ -50,14 +72,11 @@ export class MyToolReservationsComponent {
     this.reservationService.getMyToolsReservations().subscribe({
       next: (response) => {
         this.reservations = response.data.reservations;
-        // Normalizuj statusy - zamień stare statusy PAID/FINISHED na nowe
         this.reservations.forEach(reservation => {
           reservation.status = normalizeReservationStatus(reservation.status);
         });
 
-        // Pobierz informacje o narzędziach i najemcach
         this.reservations.forEach(reservation => {
-          // Pobierz dane narzędzia
           this.toolService.getToolById(reservation.toolId).subscribe({
             next: (tool) => {
               reservation.tool = tool;
@@ -67,7 +86,6 @@ export class MyToolReservationsComponent {
             }
           });
 
-          // Pobierz dane najemcy
           this.userService.getUserById(reservation.renterId).subscribe({
             next: (renterResponse) => {
               if (renterResponse.data?.user) {
@@ -101,16 +119,42 @@ export class MyToolReservationsComponent {
     this.activeStatusFilter = status;
   }
 
-  // Metoda do otwarcia modala kontaktu
   openContactModal(user: any): void {
     this.selectedContactUser = user;
     this.showContactModal = true;
   }
 
-  // Metoda do zamknięcia modala kontaktu
   closeContactModal(): void {
     this.showContactModal = false;
     this.selectedContactUser = null;
+  }
+
+  openTermsModal(reservation: Reservation): void {
+    const termsId = reservation.termsId ?? reservation.tool?.termsId ?? null;
+    if (!termsId) {
+      this.errorMessage = 'Brak przypisanego regulaminu do tej rezerwacji.';
+      return;
+    }
+
+    this.isLoadingTerms = true;
+    this.selectedTerms = null;
+    this.termsService.getTermsById(termsId).subscribe({
+      next: (response) => {
+        this.selectedTerms = response.data?.terms || null;
+        this.showTermsModal = true;
+        this.isLoadingTerms = false;
+      },
+      error: (error) => {
+        console.error('Błąd podczas ładowania regulaminu:', error);
+        this.errorMessage = 'Nie udało się pobrać treści regulaminu.';
+        this.isLoadingTerms = false;
+      }
+    });
+  }
+
+  closeTermsModal(): void {
+    this.showTermsModal = false;
+    this.selectedTerms = null;
   }
 
   confirmReservation(reservationId: number): void {
@@ -120,20 +164,15 @@ export class MyToolReservationsComponent {
 
     this.reservationService.confirmReservation(reservationId).subscribe({
       next: (response) => {
-        // Znajdź indeks rezerwacji w tablicy
         const index = this.reservations.findIndex(r => r.id === reservationId);
 
         if (index !== -1) {
-          // Zachowaj referencje do tool i renter przed aktualizacją
           const toolRef = this.reservations[index].tool;
           const renterRef = this.reservations[index].renter;
 
-          // Aktualizuj rezerwację z odpowiedzi API
           this.reservations[index] = response.data.reservation;
-          // Normalizuj status - zamień stare statusy PAID/FINISHED na nowe
           this.reservations[index].status = normalizeReservationStatus(this.reservations[index].status);
 
-          // Przywróć zachowane referencje
           this.reservations[index].tool = toolRef;
           this.reservations[index].renter = renterRef;
         }
@@ -162,16 +201,12 @@ export class MyToolReservationsComponent {
         const index = this.reservations.findIndex(r => r.id === reservationId);
 
         if (index !== -1) {
-          // Zachowaj referencje przed aktualizacją
           const toolRef = this.reservations[index].tool;
           const renterRef = this.reservations[index].renter;
 
-          // Aktualizuj rezerwację
           this.reservations[index] = response.data.reservation;
-          // Normalizuj status - zamień stare statusy PAID/FINISHED na nowe
           this.reservations[index].status = normalizeReservationStatus(this.reservations[index].status);
 
-          // Przywróć referencje
           this.reservations[index].tool = toolRef;
           this.reservations[index].renter = renterRef;
         }
@@ -182,7 +217,6 @@ export class MyToolReservationsComponent {
       error: (error) => {
         console.error('Błąd podczas anulowania rezerwacji:', error);
 
-        // Obsługa konkretnych kodów błędów HTTP
         if (error.status === 400) {
           this.errorMessage = 'Nie można anulować tej rezerwacji. Rezerwacja nie jest w odpowiednim statusie.';
         } else if (error.status === 403) {
@@ -200,7 +234,6 @@ export class MyToolReservationsComponent {
     });
   }
 
-  // Helper do formatowania daty
   formatDate(dateString: string | null | undefined): string {
     if (!dateString) {
       return 'Brak daty';
@@ -209,7 +242,6 @@ export class MyToolReservationsComponent {
     try {
       const date = new Date(dateString);
 
-      // Sprawdź czy data jest poprawna
       if (isNaN(date.getTime())) {
         return 'Nieprawidłowa data';
       }
@@ -221,7 +253,6 @@ export class MyToolReservationsComponent {
     }
   }
 
-  // Helper do tłumaczenia statusu
   translateStatus(status: string): string {
     switch (status) {
       case ReservationStatus.PENDING: return 'Oczekująca';
@@ -232,7 +263,6 @@ export class MyToolReservationsComponent {
     }
   }
 
-  // Helper do określania kolorów statusu
   getStatusColor(status: string): string {
     switch (status) {
       case ReservationStatus.PENDING: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
@@ -241,5 +271,13 @@ export class MyToolReservationsComponent {
       case ReservationStatus.CANCELED: return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
+  }
+
+  getCategoryDisplay(categoryName: string | null): string {
+    if (!categoryName || categoryName === 'OTHER') {
+      return 'Regulamin ogólny';
+    }
+    const category = this.availableCategories.find(c => c.name === categoryName);
+    return category ? category.displayName : categoryName;
   }
 }

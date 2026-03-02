@@ -14,7 +14,6 @@ import { AuthService } from './core/services/auth.service';
 export class AppComponent implements OnInit {
   title = 'rentalTool-FrontEnd';
 
-  // Wstrzyknięcie AuthService wymusza jego inicjalizację
   constructor(private authService: AuthService) {}
 
   ngOnInit() {

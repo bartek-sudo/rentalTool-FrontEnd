@@ -88,58 +88,49 @@ export class ToolDetailsComponent implements OnInit{
     );
   }
 
-  // Metoda do przełączania zdjęć w galerii
   changeImage(index: number): void {
     if (index >= 0 && index < this.toolImages.length) {
       this.currentImageIndex = index;
     }
   }
 
-  // Metoda do przechodzenia do następnego zdjęcia
   nextImage(): void {
     if (this.currentImageIndex < this.toolImages.length - 1) {
       this.currentImageIndex++;
     } else {
-      this.currentImageIndex = 0; // Zapętlenie do pierwszego zdjęcia
+      this.currentImageIndex = 0;
     }
   }
 
-  // Metoda do przechodzenia do poprzedniego zdjęcia
   prevImage(): void {
     if (this.currentImageIndex > 0) {
       this.currentImageIndex--;
     } else {
-      this.currentImageIndex = this.toolImages.length - 1; // Zapętlenie do ostatniego zdjęcia
+      this.currentImageIndex = this.toolImages.length - 1;
     }
   }
 
-  // Metoda do generowania inicjałów
   getInitials(firstName?: string | null, lastName?: string | null): string {
     if (!firstName || !lastName) return '?';
     return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
   }
 
-  // Metoda do formatowania daty
   formatDate(dateString: string | null | undefined): string {
     if (!dateString) {
       return 'Brak daty';
     }
 
     try {
-      // Backend zwraca format: "23-05-2025 15:19:39"
-      // Konwertuj na format ISO: "2025-05-23T15:19:39"
       const parts = dateString.split(' ');
       if (parts.length === 2) {
-        const datePart = parts[0]; // "23-05-2025"
-        const timePart = parts[1]; // "15:19:39"
-
+        const datePart = parts[0];
+        const timePart = parts[1];
         const dateParts = datePart.split('-');
         if (dateParts.length === 3) {
           const day = dateParts[0];
           const month = dateParts[1];
           const year = dateParts[2];
 
-          // Utwórz datę w formacie ISO
           const isoDate = `${year}-${month}-${day}T${timePart}`;
           const date = new Date(isoDate);
 
@@ -155,7 +146,6 @@ export class ToolDetailsComponent implements OnInit{
         }
       }
 
-      // Fallback - spróbuj standardowego parsowania
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
         return 'Nieprawidłowa data';
@@ -170,16 +160,6 @@ export class ToolDetailsComponent implements OnInit{
       console.error('Błąd formatowania daty:', error, 'dla daty:', dateString);
       return 'Błąd daty';
     }
-  }
-
-  // Metoda do pobrania nazwy kategorii do wyświetlenia
-  getCategoryDisplayName(category: any): string {
-    if (typeof category === 'string') {
-      // Dla zgodności wstecznej - gdy kategoria jest jeszcze stringiem
-      return category;
-    }
-    // Gdy kategoria jest obiektem z displayName
-    return category?.displayName || 'Brak kategorii';
   }
 
 }

@@ -18,15 +18,11 @@ export class TokenService {
   constructor(private cookieService: CookieService) { }
 
   getToken(): string | null {
-    // return localStorage.getItem(this.TOKEN_KEY);
-    // Cookie może być HttpOnly i nie być dostępne dla JavaScript
-    // W takim przypadku zwracamy null, ale cookie będzie automatycznie wysyłane z żądaniami HTTP
     const token = this.cookieService.get(this.TOKEN_KEY) || null;
     return token;
   }
 
   setToken(token: string): void {
-    // localStorage.setItem(this.TOKEN_KEY, token);
     const expirationDate = this.getExpirationDateFromToken(token);
     this.cookieService.set(
       this.TOKEN_KEY,
@@ -49,10 +45,6 @@ export class TokenService {
       date.setDate(date.getDate() + 1);
       return date;
     }
-  }
-
-  destroyToken(): void {
-    // Nie usuwaj ciasteczka po stronie frontu, backend ustawia wygasłe cookie przy wylogowaniu
   }
 
   getDecodedToken(): TokenPayload | null {
@@ -85,6 +77,10 @@ export class TokenService {
     }
 
     return decoded.authorities;
+  }
+
+    destroyToken(): void {
+    // Nie usuwaj ciasteczka po stronie frontu, backend ustawia wygasłe cookie przy wylogowaniu
   }
 
 }

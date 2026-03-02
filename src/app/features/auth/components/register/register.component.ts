@@ -57,7 +57,6 @@ export class RegisterComponent implements OnInit {
         this.isLoading = false;
         this.registrationSuccess = true;
         this.registeredEmail = this.registerForm.get('email')?.value;
-        // Przekieruj na stronę weryfikacji emaila po 3 sekundach
         setTimeout(() => {
           this.router.navigate(['/verify-email'], {
             queryParams: { email: this.registeredEmail }

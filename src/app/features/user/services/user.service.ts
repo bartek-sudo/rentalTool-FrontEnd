@@ -32,7 +32,6 @@ export class UserService {
     return this.http.get<HttpResponse<{ user: User }>>(`${this.apiUrl}/${id}`);
   }
 
-  // Metody dla admina
   getAllUsers(page: number = 0, size: number = 10, search?: string): Observable<HttpResponse<UserListResponse>> {
     let url = `${this.apiUrl}/admin?page=${page}&size=${size}`;
     if (search) {

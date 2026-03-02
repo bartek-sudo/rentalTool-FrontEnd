@@ -26,20 +26,17 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
   totalPages = 0;
   totalItems = 0;
 
-  // Modal states
   showDeleteModal = false;
   showModerationModal = false;
   selectedTool: Tool | null = null;
   moderationAction: 'approve' | 'reject' | 'remoderation' = 'approve';
   moderationComment = '';
 
-  // Message states
   showSuccessMessage = false;
   showErrorMessage = false;
   successMessage = '';
   errorMessage = '';
 
-  // Status filters
   activeStatusFilter = 'pending';
   statusFilters = [
     { value: 'pending', label: 'Oczekujące na moderację' },
@@ -49,7 +46,6 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
 
   Math = Math;
 
-  // Role management
   userRole = '';
   isModerator = false;
 
@@ -78,7 +74,6 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
     this.isModerator = roles.includes('MODERATOR') || roles.includes('ROLE_MODERATOR') || this.isAdmin();
   }
 
-  // Sprawdź czy użytkownik ma rolę admin
   isAdmin(): boolean {
     const roles = this.tokenService.getRoles();
     return roles.includes('ADMIN') || roles.includes('ROLE_ADMIN');
@@ -194,7 +189,6 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
   deleteTool() {
     if (!this.selectedTool?.id) return;
 
-    // TODO: Dodać metodę deleteTool do ToolService
     console.log('Deleting tool:', this.selectedTool.id);
     this.closeModals();
   }
@@ -299,14 +293,5 @@ export class ToolManagementComponent implements OnInit, OnDestroy {
       case 'REJECTED': return 'Odrzucone';
       default: return status || 'Nieznany';
     }
-  }
-
-  getCategoryDisplayName(category: any): string {
-    if (typeof category === 'string') {
-      // Dla zgodności wstecznej - gdy kategoria jest jeszcze stringiem
-      return category;
-    }
-    // Gdy kategoria jest obiektem z displayName
-    return category?.displayName || 'Brak kategorii';
   }
 }

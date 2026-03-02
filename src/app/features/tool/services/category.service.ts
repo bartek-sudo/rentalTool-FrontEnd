@@ -21,27 +21,22 @@ export class CategoryService {
 
   constructor() { }
 
-  // Pobierz wszystkie kategorie
   getAllCategories(): Observable<HttpResponse<{ categories: Category[] }>> {
     return this.http.get<HttpResponse<{ categories: Category[] }>>(`${this.apiUrl}`);
   }
 
-  // Pobierz szczegóły konkretnej kategorii
   getCategoryById(id: number): Observable<HttpResponse<{ category: Category }>> {
     return this.http.get<HttpResponse<{ category: Category }>>(`${this.apiUrl}/${id}`);
   }
 
-  // ADMIN - Utwórz nową kategorię
   createCategory(categoryData: CategoryRequest): Observable<HttpResponse<{ category: Category }>> {
     return this.http.post<HttpResponse<{ category: Category }>>(`${this.apiUrl}`, categoryData);
   }
 
-  // ADMIN - Aktualizuj kategorię
   updateCategory(id: number, categoryData: CategoryRequest): Observable<HttpResponse<{ category: Category }>> {
     return this.http.put<HttpResponse<{ category: Category }>>(`${this.apiUrl}/${id}`, categoryData);
   }
 
-  // ADMIN - Usuń kategorię
   deleteCategory(id: number): Observable<HttpResponse<void>> {
     return this.http.delete<HttpResponse<void>>(`${this.apiUrl}/${id}`);
   }

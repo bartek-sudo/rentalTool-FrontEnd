@@ -124,7 +124,7 @@
                   {{ reservation?.tool?.name }}
                 </p>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                  Kategoria: {{ reservation?.tool?.category }}
+                  Kategoria: {{ reservation?.tool?.displayName }}
                 </p>
               </div>
               <div class="md:text-right">
@@ -152,7 +152,7 @@
             <div class="bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-200 dark:border-gray-600 p-4 max-h-[32rem] overflow-y-auto">
               <div class="mb-3">
                 <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  {{ assignedTerms.categoryName ? 'Regulamin dla kategorii: ' + assignedTerms.categoryName : 'Regulamin ogólny' }}
+                  {{ assignedTerms.categoryName ? 'Regulamin dla kategorii: ' + getCategoryDisplayName(assignedTerms.categoryName) : 'Regulamin ogólny' }}
                 </p>
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                   {{ assignedTerms.title }}

@@ -34,32 +34,26 @@ export class VerifyEmailComponent implements OnInit {
 
   ngOnInit() {
     initFlowbite();
-    
-    // Sprawdź parametry URL
+
     this.route.queryParams.subscribe(params => {
       const token = params['token'];
       const success = params['success'];
       const error = params['error'];
 
       if (token) {
-        // Jeśli jest token, spróbuj zweryfikować
         this.verifyEmail(token);
       } else if (success === 'true') {
-        // Jeśli backend przekierował z sukcesem
         this.status = 'success';
         this.message = 'Twój email został pomyślnie zweryfikowany! Możesz się teraz zalogować.';
       } else if (error) {
-        // Jeśli backend przekierował z błędem
         this.status = 'error';
         this.message = this.getErrorMessage(error);
       } else {
-        // Brak parametrów - pokaż formularz do ponownego wysłania
         this.status = 'pending';
         this.message = 'Wprowadź swój adres email, aby ponownie otrzymać email weryfikacyjny.';
       }
     });
 
-    // Pobierz email z query params jeśli dostępny
     const emailParam = this.route.snapshot.queryParams['email'];
     if (emailParam) {
       this.email = emailParam;
@@ -75,7 +69,6 @@ export class VerifyEmailComponent implements OnInit {
       next: (response) => {
         this.status = 'success';
         this.message = response.message || 'Twój email został pomyślnie zweryfikowany! Możesz się teraz zalogować.';
-        // Przekieruj na login po 3 sekundach
         setTimeout(() => {
           this.router.navigate(['/login'], { queryParams: { verified: 'true' } });
         }, 3000);

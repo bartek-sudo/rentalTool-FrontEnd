@@ -46,16 +46,15 @@ export class ToolsListComponent implements OnInit, OnDestroy {
   searchTerm = '';
   selectedCategory: string = '';
   currentPage = 0;
-  pageSize = 10;
+  pageSize = 9;
   totalPages = 0;
   totalItems = 0;
-  selectedSort = 'created_desc'; // Domyślnie najnowsze (utworzone ostatnio)
+  selectedSort = 'created_desc';
   Math = Math;
 
-  // Parametry geolokalizacji
   userLatitude?: number;
   userLongitude?: number;
-  selectedRadius: number | null = 50; // Domyślnie 50 km
+  selectedRadius: number | null = 50;
   isGeolocationEnabled = false;
   isLoadingLocation = false;
   geolocationError = '';
@@ -67,13 +66,11 @@ export class ToolsListComponent implements OnInit, OnDestroy {
     { value: null, label: 'Wszystkie' }
   ];
 
-  // Mapa Google Maps
   private map?: any;
   private userMarker?: any;
   private toolMarkers: any[] = [];
   private radiusCircle?: any;
 
-  // Dostępne kategorie
   categories = [
     { value: '', label: 'Wszystkie kategorie' },
     { value: CategoryName.GARDENING, label: 'Ogród' },
@@ -98,10 +95,8 @@ export class ToolsListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Automatycznie pobierz lokalizację użytkownika przy starcie
     this.getUserLocation();
 
-    // Subskrypcja na zmiany parametrów zapytania
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
       this.searchTerm = params['search'] || '';
       this.selectedCategory = params['category'] || '';
@@ -109,7 +104,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
       this.loadTools();
     });
 
-    // Subskrypcja na zmiany wyszukiwania
     this.toolService.searchTerm$.pipe(takeUntil(this.destroy$)).subscribe(term => {
       if (term !== this.searchTerm) {
         this.searchTerm = term;
@@ -123,7 +117,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
 
-    // Cleanup mapy Google Maps
     if (this.map) {
       this.toolMarkers.forEach(marker => marker.setMap(null));
       if (this.userMarker) this.userMarker.setMap(null);
@@ -136,7 +129,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     const [sortBy, sortDirection] = this.getSortParams();
 
-    // Jeśli geolokalizacja jest włączona, używamy lokalizacji użytkownika
     const latitude = this.isGeolocationEnabled ? this.userLatitude : undefined;
     const longitude = this.isGeolocationEnabled ? this.userLongitude : undefined;
     const radius = this.isGeolocationEnabled ? this.selectedRadius : undefined;
@@ -158,7 +150,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
         this.totalItems = response.data.totalItems;
         this.isLoading = false;
 
-        // Zaktualizuj markery na mapie
         if (this.isGeolocationEnabled && this.map) {
           this.updateMapMarkers();
         }
@@ -167,12 +158,11 @@ export class ToolsListComponent implements OnInit, OnDestroy {
         console.error('Error loading tools:', error);
         this.isLoading = false;
 
-        // Jeśli 401 przy geolokalizacji, wyłącz ją i załaduj bez geolokalizacji
         if (error.status === 401 && this.isGeolocationEnabled) {
           console.warn('Endpoint wymaga autoryzacji. Ładowanie narzędzi bez geolokalizacji...');
           this.geolocationError = 'Wyszukiwanie z geolokalizacją wymaga zalogowania. Wyświetlanie wszystkich narzędzi.';
           this.isGeolocationEnabled = false;
-          this.loadTools(); // Spróbuj ponownie bez geolokalizacji
+          this.loadTools();
         }
       }
     });
@@ -184,9 +174,9 @@ export class ToolsListComponent implements OnInit, OnDestroy {
       this.geolocationError = '';
 
       const options = {
-        enableHighAccuracy: true, // Większa dokładność
-        timeout: 15000, // 15 sekund timeout
-        maximumAge: 0 // Nie używaj cache, zawsze pobieraj świeżą lokalizację
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
       };
 
       navigator.geolocation.getCurrentPosition(
@@ -197,17 +187,15 @@ export class ToolsListComponent implements OnInit, OnDestroy {
           this.isGeolocationEnabled = true;
           this.geolocationError = '';
           this.isLoadingLocation = false;
-          this.currentPage = 0; // Reset do pierwszej strony
+          this.currentPage = 0;
 
-          // Zmień domyślne sortowanie na odległość gdy geolokalizacja jest włączona
           this.selectedSort = 'distance_asc';
 
-          // Inicjalizuj mapę po małym opóźnieniu (aby DOM był gotowy)
           setTimeout(() => {
             this.initMap();
           }, 100);
 
-          this.loadTools(); // Przeładuj narzędzia z geolokalizacją
+          this.loadTools();
         },
         (error) => {
           console.error('Błąd geolokalizacji:', error);
@@ -231,11 +219,9 @@ export class ToolsListComponent implements OnInit, OnDestroy {
           this.geolocationError = errorMessage;
           this.isGeolocationEnabled = false;
 
-          // Wyczyść dane lokalizacji
           this.userLatitude = undefined;
           this.userLongitude = undefined;
 
-          // Usuń mapę jeśli istnieje
           if (this.map) {
             this.toolMarkers.forEach(marker => marker.setMap(null));
             if (this.userMarker) this.userMarker.setMap(null);
@@ -243,9 +229,7 @@ export class ToolsListComponent implements OnInit, OnDestroy {
             this.map = null;
           }
 
-          // Nie ładuj narzędzi jeśli użytkownik odmówił dostępu - po prostu pokaż komunikat
           if (error.code !== error.PERMISSION_DENIED) {
-            // Dla innych błędów (timeout, unavailable) - załaduj wszystkie narzędzia
             this.loadTools();
           }
         },
@@ -259,16 +243,13 @@ export class ToolsListComponent implements OnInit, OnDestroy {
 
   toggleGeolocation() {
     if (this.isGeolocationEnabled) {
-      // Wyłącz geolokalizację
       this.isGeolocationEnabled = false;
       this.currentPage = 0;
 
-      // Przywróć domyślne sortowanie (najnowsze) gdy geolokalizacja jest wyłączona
       if (this.selectedSort === 'distance_asc' || this.selectedSort === 'distance_desc') {
         this.selectedSort = 'created_desc';
       }
 
-      // Usuń mapę Google Maps
       if (this.map) {
         this.toolMarkers.forEach(marker => marker.setMap(null));
         if (this.userMarker) this.userMarker.setMap(null);
@@ -278,7 +259,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
 
       this.loadTools();
     } else {
-      // Włącz geolokalizację
       this.getUserLocation();
     }
   }
@@ -286,7 +266,7 @@ export class ToolsListComponent implements OnInit, OnDestroy {
   updateRadius() {
     if (this.isGeolocationEnabled) {
       this.currentPage = 0;
-      this.updateRadiusCircle(); // Zaktualizuj okrąg na mapie
+      this.updateRadiusCircle();
       this.loadTools();
       this.updateQueryParams();
     }
@@ -311,7 +291,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
       category: this.selectedCategory || null
     };
 
-    // Usuń null values
     Object.keys(queryParams).forEach(key => {
       if (queryParams[key] === null) {
         delete queryParams[key];
@@ -359,14 +338,12 @@ export class ToolsListComponent implements OnInit, OnDestroy {
     return cat ? cat.label : category;
   }
 
-  // Metody obsługi mapy Google Maps
   initMap() {
     if (!this.userLatitude || !this.userLongitude || typeof google === 'undefined') return;
 
     const mapElement = document.getElementById('map');
     if (!mapElement) return;
 
-    // Inicjalizuj mapę Google Maps
     this.map = new google.maps.Map(mapElement, {
       center: { lat: this.userLatitude, lng: this.userLongitude },
       zoom: 12,
@@ -375,7 +352,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
       fullscreenControl: true
     });
 
-    // Dodaj marker użytkownika (niebieski)
     this.userMarker = new google.maps.Marker({
       position: { lat: this.userLatitude, lng: this.userLongitude },
       map: this.map,
@@ -390,7 +366,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Info window dla użytkownika
     const userInfoWindow = new google.maps.InfoWindow({
       content: '<div style="padding: 8px;"><strong>Twoja lokalizacja</strong></div>'
     });
@@ -399,7 +374,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
       userInfoWindow.open(this.map, this.userMarker);
     });
 
-    // Dodaj okrąg promienia (jeśli ustawiony)
     if (this.selectedRadius !== null) {
       this.radiusCircle = new google.maps.Circle({
         strokeColor: '#4285F4',
@@ -409,29 +383,25 @@ export class ToolsListComponent implements OnInit, OnDestroy {
         fillOpacity: 0.15,
         map: this.map,
         center: { lat: this.userLatitude, lng: this.userLongitude },
-        radius: this.selectedRadius * 1000 // konwersja km na metry
+        radius: this.selectedRadius * 1000
       });
     }
 
-    // Dodaj markery narzędzi
     this.updateMapMarkers();
   }
 
   updateMapMarkers() {
     if (!this.map || typeof google === 'undefined') return;
 
-    // Usuń stare markery narzędzi
     this.toolMarkers.forEach(marker => marker.setMap(null));
     this.toolMarkers = [];
 
     const bounds = new google.maps.LatLngBounds();
 
-    // Dodaj marker użytkownika do bounds
     if (this.userMarker) {
       bounds.extend(this.userMarker.getPosition());
     }
 
-    // Dodaj markery dla każdego narzędzia z lokalizacją
     this.tools.forEach(tool => {
       if (tool.latitude && tool.longitude) {
         const marker = new google.maps.Marker({
@@ -468,7 +438,6 @@ export class ToolsListComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Dopasuj widok mapy do wszystkich markerów
     if (this.toolMarkers.length > 0 || this.userMarker) {
       this.map.fitBounds(bounds);
     }
@@ -477,13 +446,11 @@ export class ToolsListComponent implements OnInit, OnDestroy {
   updateRadiusCircle() {
     if (!this.map || !this.userLatitude || !this.userLongitude || typeof google === 'undefined') return;
 
-    // Usuń stary okrąg
     if (this.radiusCircle) {
       this.radiusCircle.setMap(null);
       this.radiusCircle = null;
     }
 
-    // Dodaj nowy okrąg (jeśli promień jest ustawiony)
     if (this.selectedRadius !== null) {
       this.radiusCircle = new google.maps.Circle({
         strokeColor: '#4285F4',
@@ -493,7 +460,7 @@ export class ToolsListComponent implements OnInit, OnDestroy {
         fillOpacity: 0.15,
         map: this.map,
         center: { lat: this.userLatitude, lng: this.userLongitude },
-        radius: this.selectedRadius * 1000 // konwersja km na metry
+        radius: this.selectedRadius * 1000
       });
     }
   }

@@ -19,13 +19,11 @@ export class ReservationManagementComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  // Paginacja
   currentPage = 0;
   pageSize = 10;
   totalPages = 0;
   totalItems = 0;
 
-  // Role management
   userRole = '';
   isAdmin = false;
   isModerator = false;
@@ -65,7 +63,6 @@ export class ReservationManagementComponent implements OnInit {
     this.reservationService.getAllReservations(this.currentPage, this.pageSize).subscribe({
       next: (response) => {
         this.reservations = response.data.reservations;
-        // Normalizuj statusy - zamień stare statusy PAID/FINISHED na nowe
         this.reservations.forEach(reservation => {
           reservation.status = normalizeReservationStatus(reservation.status);
         });
@@ -73,14 +70,11 @@ export class ReservationManagementComponent implements OnInit {
         this.totalItems = response.data.totalItems;
         this.currentPage = response.data.currentPage;
 
-        // Pobierz szczegóły narzędzi i użytkowników
         this.reservations.forEach(reservation => {
-          // Pobierz dane narzędzia i właściciela (jak w my-rentals)
           if (reservation.toolId) {
             this.toolService.getToolById(reservation.toolId).subscribe({
               next: (tool) => {
                 reservation.tool = tool;
-                // Pobierz dane właściciela narzędzia
                 if (tool && tool.ownerId) {
                   this.userService.getUserById(tool.ownerId).subscribe({
                     next: (ownerResp) => {
@@ -93,7 +87,6 @@ export class ReservationManagementComponent implements OnInit {
               }
             });
           }
-          // Najemca
           if (reservation.renterId && !reservation.renter) {
             this.userService.getUserById(reservation.renterId).subscribe({
               next: (userResp) => {

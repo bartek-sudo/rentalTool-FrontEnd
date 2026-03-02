@@ -100,6 +100,12 @@
               Zaakceptuj regulamin
             </button>
 
+            <!-- Przycisk pokaż regulamin - otwiera modal z treścią regulaminu -->
+            <button *ngIf="rental.termsId || rental.tool?.termsId" (click)="openTermsModal(rental)"
+              class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-center text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 dark:bg-indigo-700 dark:hover:bg-indigo-800 dark:focus:ring-indigo-800">
+              Pokaż regulamin
+            </button>
+
             <!-- Przycisk anuluj - widoczny gdy status PENDING lub CONFIRMED -->
             <button
               *ngIf="rental.status === ReservationStatus.PENDING || rental.status === ReservationStatus.CONFIRMED"
@@ -199,6 +205,38 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal regulaminu -->
+<div *ngIf="showTermsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-gray-900 dark:bg-opacity-70 overflow-y-auto h-full w-full z-50 flex items-center justify-center" (click)="closeTermsModal()">
+  <div class="relative p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white dark:bg-gray-800" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Regulamin przypisany do rezerwacji</h3>
+      <button (click)="closeTermsModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <div *ngIf="isLoadingTerms" class="py-12 flex justify-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+
+    <div *ngIf="!isLoadingTerms && selectedTerms" class="space-y-4 max-h-[60vh] overflow-y-auto">
+      <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ selectedTerms.categoryName ? 'Regulamin dla kategorii: ' + getCategoryDisplay(selectedTerms.categoryName) : 'Regulamin ogólny' }}</p>
+      <h4 class="text-lg font-semibold text-gray-900 dark:text-white">{{ selectedTerms.title }}</h4>
+      <div class="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-line">{{ selectedTerms.content }}</div>
+    </div>
+
+    <div *ngIf="!isLoadingTerms && !selectedTerms" class="py-8 text-center text-gray-600 dark:text-gray-400">
+      Nie znaleziono treści regulaminu.
+    </div>
+
+    <div class="mt-6 flex justify-end">
+      <button (click)="closeTermsModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">Zamknij</button>
     </div>
   </div>
 </div>

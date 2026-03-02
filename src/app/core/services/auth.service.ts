@@ -97,7 +97,7 @@ export class AuthService {
 
   checkAuthStatus(): void {
     const token = this.tokenService.getToken();
-    
+
     if (token) {
       // Sprawdź czy token nie wygasł
       if (this.tokenService.isTokenExpired()) {
@@ -106,7 +106,7 @@ export class AuthService {
         this.isLogged.set(false);
         return;
       }
-      
+
       // Jeśli token jest ważny, pobierz informacje o użytkowniku
       this.getUserInfo().subscribe({
         next: () => {
